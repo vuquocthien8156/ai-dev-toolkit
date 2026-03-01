@@ -34,31 +34,13 @@ echo "   Project: $(pwd)"
 echo ""
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Step 1: Update global rules (GEMINI.md)
+# Step 1: Manual Global Rules Note
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-echo "📝 Step 1: Updating global rules → $GEMINI_RULES"
-
-if [ -f "$TOOLKIT_DIR/user-rules/memory-rules.md" ]; then
-  # Extract the content between ``` blocks
-  RULES_CONTENT=$(sed -n '/^```$/,/^```$/p' "$TOOLKIT_DIR/user-rules/memory-rules.md" | sed '1d;$d')
-
-  if [ -n "$RULES_CONTENT" ]; then
-    # Backup existing rules
-    if [ -f "$GEMINI_RULES" ]; then
-      cp "$GEMINI_RULES" "$GEMINI_RULES.backup"
-      echo "   📋 Backed up existing rules → GEMINI.md.backup"
-    fi
-    # Write new rules
-    echo "$RULES_CONTENT" > "$GEMINI_RULES"
-    echo "   ✅ Global rules updated (Sections I–XI)"
-  else
-    echo "   ⚠️  Could not parse rules from memory-rules.md"
-  fi
-else
-  echo "   ⚠️  user-rules/memory-rules.md not found"
-fi
-
+echo "📝 Step 1: Global rules (GEMINI.md)"
+echo "   ⚠️  Please manually copy the contents of user-rules/memory-rules.md"
+echo "   to your IDE Settings -> User Rules."
 echo ""
+
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Step 2: Install global skills

@@ -84,30 +84,31 @@ cp ~/Documents/ai-dev-toolkit/cross-ide/AGENTS.md ~/Documents/Zigvy/hr-forte/hr-
 
 ### ✅ Automatic (AI does this without prompting)
 
-| What                       | How it works                                            | Source file                                          |
-| -------------------------- | ------------------------------------------------------- | ---------------------------------------------------- |
-| **TypeScript rules**       | Always active — AI reads `GEMINI.md` every conversation | `user-rules/memory-rules.md` → `~/.gemini/GEMINI.md` |
-| **No `any`**, strict types | Part of Section III (TS Essentials) in rules            | Always active                                        |
-| **Proposal-only mode**     | AI proposes first, asks before editing                  | Section I in rules                                   |
-| **Verify before done**     | AI re-reads checklist, runs `tsc`, reports status       | Section X in rules                                   |
-| **English output**         | All code, comments, docs in English                     | Section XI in rules                                  |
-| **DDD skill**              | AI reads when task involves DDD patterns                | `skills/ddd-core-rules/SKILL.md`                     |
-| **TS patterns**            | AI reads when writing TypeScript                        | `skills/typescript-mastery/SKILL.md`                 |
-| **Review checklist**       | AI reads when reviewing code                            | `skills/code-review/SKILL.md`                        |
-| **Git conventions**        | AI reads when making commits                            | `skills/git-workflow/SKILL.md`                       |
+| What                       | How it works                                        | Source file                          |
+| -------------------------- | --------------------------------------------------- | ------------------------------------ |
+| **TypeScript rules**       | Enforced via auto-loaded `typescript-mastery` skill | `skills/typescript-mastery/SKILL.md` |
+| **No `any`**, strict types | Enforced via `typescript-mastery` skill             | `skills/typescript-mastery/SKILL.md` |
+| **Proposal-only mode**     | AI proposes first, asks before editing              | Section I in rules                   |
+| **Verify before done**     | AI re-reads checklist, runs `tsc`, reports status   | Section X in rules                   |
+| **English output**         | All code, comments, docs in English                 | Section XI in rules                  |
+| **DDD skill**              | AI reads when task involves DDD patterns            | `skills/ddd-core-rules/SKILL.md`     |
+| **TS patterns**            | AI reads when writing TypeScript                    | `skills/typescript-mastery/SKILL.md` |
+| **Review checklist**       | AI reads when reviewing code                        | `skills/code-review/SKILL.md`        |
+| **Git conventions**        | AI reads when making commits                        | `skills/git-workflow/SKILL.md`       |
 
 ### 🔧 Manual (You trigger these)
 
-| What                  | How to trigger               | When to use                                       |
-| --------------------- | ---------------------------- | ------------------------------------------------- |
-| **Plan workflow**     | Type `/plan` in chat         | Starting a new feature or complex task            |
-| **Review workflow**   | Type `/review` in chat       | Before creating a PR                              |
-| **Debug workflow**    | Type `/debug` in chat        | Stuck on a bug                                    |
-| **Verify workflow**   | Type `/verify` in chat       | Before declaring task complete                    |
-| **Scan workflow**     | Type `/scan-modules` in chat | Map project modules and generate docs             |
-| **Init workflow**     | Type `/init-project` in chat | First-time project setup or refresh context       |
-| **Setup script**      | Run `setup-antigravity.sh`   | New machine, new project, or after toolkit update |
-| **Cross-IDE configs** | Copy files to project root   | When using Cursor/Claude/Copilot                  |
+| What                  | How to trigger                   | When to use                                        |
+| --------------------- | -------------------------------- | -------------------------------------------------- |
+| **Plan workflow**     | Type `/plan` in chat             | Starting a new feature or complex task             |
+| **Review workflow**   | Type `/review` in chat           | Before creating a PR                               |
+| **Debug workflow**    | Type `/debug` in chat            | Stuck on a bug                                     |
+| **Verify workflow**   | Type `/verify` in chat           | Before declaring task complete                     |
+| **Scan workflow**     | (Merged into `/refresh-context`) | Map project modules and generate docs              |
+| **Refresh workflow**  | Type `/refresh-context` in chat  | Setup AI context, detect tech stack, generate docs |
+| **Docs workflow**     | Type `/docs` in chat             | Auto-document business decisions                   |
+| **Setup script**      | Run `setup-antigravity.sh`       | New machine, new project, or after toolkit update  |
+| **Cross-IDE configs** | Copy files to project root       | When using Cursor/Claude/Copilot                   |
 
 ### 🧠 Semi-Automatic (AI decides)
 
@@ -133,13 +134,13 @@ ai-dev-toolkit/
 │   ├── code-review/SKILL.md           ← 8-section review checklist
 │   └── git-workflow/SKILL.md          ← Conventional Commits, PR workflow
 │
-├── workflows/                         ← Workflows (copied to project .agent/workflows/)
-│   ├── plan.md                        ← /plan — structured planning
-│   ├── review.md                      ← /review — code review
-│   ├── debug.md                       ← /debug — systematic debugging
-│   ├── verify.md                      ← /verify — verification before done
-│   ├── scan-modules.md               ← /scan-modules — project module scanner
-│   └── init-project.md               ← /init-project — project context init
+│   ├── develop/                           ← (Optional) Project-specific workflows
+│   ├── plan.md                            ← /plan — structured planning
+│   ├── review.md                          ← /review — code review
+│   ├── debug.md                           ← /debug — systematic debugging
+│   ├── verify.md                          ← /verify — verification before done
+│   ├── refresh-context.md                 ← /refresh-context — context setup & doc generation
+│   └── docs.md                            ← /docs — auto-documentation
 │
 ├── user-rules/
 │   └── memory-rules.md                ← All 42 rules (written to ~/.gemini/GEMINI.md)

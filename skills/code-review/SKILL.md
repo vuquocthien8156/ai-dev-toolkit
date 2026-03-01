@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: >
-  Systematic code review checklist for TypeScript/NestJS projects.
+  Systematic code review checklist for TypeScript projects.
   Covers type safety, architecture compliance, performance, error handling,
   and DDD pattern verification.
 ---

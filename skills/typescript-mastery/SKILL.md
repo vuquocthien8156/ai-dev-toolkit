@@ -7,11 +7,21 @@ description: >
 
 # TypeScript Mastery
 
+> [!IMPORTANT]
+> **MANDATORY**: These rules must be strictly followed for all TypeScript projects. This skill replaces the global Section III rules.
+
 ## Core Principles
 
 1. **No `any`** — ever. Use `unknown` + type guards when type is truly unknown.
 2. **Explicit return types** on all exported functions and methods.
-3. **Strict mode** always enabled (`strict: true` in tsconfig).
+3. **Prefer `interface`** for object shapes, `type` for unions/intersections.
+4. **Use `readonly`** for data that should not change after creation.
+5. **Naming**: PascalCase for classes/interfaces/types, camelCase for variables/methods, kebab-case for files.
+6. **Functions**: single purpose, <20 lines, verb-first naming (`getUser`, `isValid`).
+7. **RO-RO pattern**: Use Receive-Object-Return-Object for 3+ parameters.
+8. **DTOs**: validate inputs (e.g., `class-validator`). Declare simple types for outputs.
+9. **Prefer composition** over inheritance. Follow SOLID principles.
+10. **Use `as const`** for literals, `readonly` arrays/tuples where applicable.
 
 ## Type Design
 

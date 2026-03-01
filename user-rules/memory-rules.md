@@ -27,18 +27,6 @@ II. RESPONSE PROTOCOL (MANDATORY)
    - Question Gate: End with a specific question to clarify ambiguous points OR a request for confirmation to proceed to the next analysis phase.
 6. Formatting: Use a Horizontal Rule ("---") to separate sections. Code must ALWAYS be at the very end, and ONLY after Confirmation.
 
-III. TYPESCRIPT ESSENTIALS (Always Active)
-7. Never use `any`. Use `unknown` + type guards if type is truly unknown.
-8. Always declare return types for functions and methods.
-9. Prefer `interface` for object shapes, `type` for unions/intersections.
-10. Use `readonly` for data that should not change after creation.
-11. Naming: PascalCase for classes/interfaces/types, camelCase for variables/methods, kebab-case for files.
-12. Functions: single purpose, <20 lines, verb-first naming (getUser, createOrder, isValid).
-13. Use Receive-Object-Return-Object (RO-RO) pattern for 3+ parameters.
-14. DTOs: validate inputs with class-validator. Declare simple types for outputs.
-15. Prefer composition over inheritance. Follow SOLID principles.
-16. Use `as const` for literals, `readonly` arrays/tuples where applicable.
-
 IV. PROJECT AWARENESS
 17. Existing Context: Adapt to existing styles.
 18. Language Rule: Vietnamese for Reports, English for Technical.
@@ -72,8 +60,9 @@ VI. TASK MANAGEMENT
 23. Plan First: Write plan to `tasks/todo.md` with checkable items
 24. Verify Plan: Check in before starting implementation
 25. Track Progress: Mark items complete as you go
-26. Document Results: Add review section to `tasks/todo.md`
-27. Capture Lessons: Update `tasks/lessons.md` after corrections
+26. Single Source of Truth: After user confirms ANY decision, IMMEDIATELY update implementation plan or report file. Plan must reflect all confirmed decisions.
+27. Document Results: Add review section to `tasks/todo.md`
+28. Capture Lessons: Update `tasks/lessons.md` after corrections
     - `tasks/lessons.md` = AI session notes (temporary, self-improvement)
     - `docs/<module>/decisions/` = permanent team knowledge (committed to git)
 
@@ -131,7 +120,22 @@ XI. LANGUAGE RULE (STRICT)
     - NEVER write Vietnamese in project files, even if user prompts in Vietnamese
 43. Conversation and reports MUST be in Vietnamese:
     - Conceptual Reports (Rule 5), analysis, strategy discussions
-    - Artifact reports (salary review, planning notes, etc.)
     - Chat responses and explanations
     - Technical terms (function names, patterns, tools) giữ nguyên tiếng Anh trong câu tiếng Việt
+
+XII. AUTO-WORKFLOW DETECTION
+44. Auto-detect request type and trigger matching workflow from `.agent/workflows/` (fallback to global).
+45. Bug reports → auto-run `/debug`.
+46. Feature requests → auto-run `/plan` and ask for confirmation.
+47. Task completion → auto-run `/verify`.
+
+XIII. CONTEXT-AWARE SKILL LOADING
+48. At conversation start, always read `project-context/SKILL.md` (if exists).
+49. Lazy-load specific rule/skill files via the Topic-Skill Mapping table in `project-context`.
+50. Never load all skills upfront. Only load when the topic/module is affected (e.g., TS project → load `typescript-mastery`).
+
+XIV. SESSION CONTEXT MANAGEMENT
+51. For tasks requiring 3+ steps, maintain `tasks/session-context.md`.
+52. Store current module, loaded skills, key files, and current objective.
+53. On context recovery (e.g., conversation truncated or new session), read `session-context.md` first to restore state.
 ```
