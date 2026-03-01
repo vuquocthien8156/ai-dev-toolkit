@@ -1,17 +1,15 @@
 {
   "name": "thienbun-ai-dev-toolkit",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Personal AI dev toolkit — curated skills, workflows, and rules for Antigravity, Cursor, Claude Code",
   "bin": {
     "thienbun-ai-dev-toolkit": "./scripts/setup-antigravity.sh"
   },
   "files": [
-    "skills/",
-    "workflows/",
-    "user-rules/",
-    "cross-ide/",
-    "references/",
-    "scripts/"
+    "scripts",
+    "skills",
+    "workflows",
+    "user-rules"
   ],
   "keywords": [
     "antigravity",

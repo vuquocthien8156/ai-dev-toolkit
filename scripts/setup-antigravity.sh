@@ -119,9 +119,9 @@ fi
 # Cross-IDE symlinks
 if [ -d "$PROJECT_AGENT_DIR/skills" ]; then
   mkdir -p .cursor .claude 2>/dev/null || true
-  ln -sf "../$PROJECT_AGENT_DIR/skills" .cursor/skills 2>/dev/null \
+  ln -sfn "../$PROJECT_AGENT_DIR/skills" .cursor/skills 2>/dev/null \
     && echo "   ✅ .cursor/skills → .agent/skills" || true
-  ln -sf "../$PROJECT_AGENT_DIR/skills" .claude/skills 2>/dev/null \
+  ln -sfn "../$PROJECT_AGENT_DIR/skills" .claude/skills 2>/dev/null \
     && echo "   ✅ .claude/skills → .agent/skills" || true
 fi
 
