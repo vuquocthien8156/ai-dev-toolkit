@@ -1,0 +1,93 @@
+{
+  "version": "1.0.0",
+  "last_updated": "2026-03-01T15:52:00+07:00",
+  "registry": [
+    {
+      "id": "claudekit-skills",
+      "url": "https://github.com/mrgoonie/claudekit-skills",
+      "type": "skill_pack",
+      "condition": "has_package_json",
+      "action": "setup_sh_clone",
+      "description": "Comprehensive skill pack for modern web/mobile development."
+    },
+    {
+      "id": "agent-scan",
+      "url": "https://github.com/snyk/agent-scan",
+      "type": "cli_tool",
+      "condition": "has_package_json",
+      "action": "inject_npm_script",
+      "description": "Snyk security scanner CLI tool for AI agents."
+    },
+    {
+      "id": "awesome-agent-skills",
+      "url": "https://github.com/VoltAgent/awesome-agent-skills",
+      "type": "index_only",
+      "condition": "always",
+      "action": "rag_search_only",
+      "description": "Curated list of community and official AI Agent Skills."
+    },
+    {
+      "id": "awesome-cursorrules",
+      "url": "https://github.com/PatrickJS/awesome-cursorrules",
+      "type": "system_prompt_rules",
+      "condition": "is_cursor_ide",
+      "action": "copy_cursorrules",
+      "description": "Collection of IDE-specific behavior rules."
+    },
+    {
+      "id": "antigravity-awesome-skills",
+      "url": "https://github.com/sickn33/antigravity-awesome-skills",
+      "type": "index_only",
+      "condition": "always",
+      "action": "rag_search_only",
+      "description": "Curated list of Antigravity AI Agent Skills."
+    },
+    {
+      "id": "ui-ux-pro-max-skill",
+      "url": "https://github.com/nextlevelbuilder/ui-ux-pro-max-skill",
+      "type": "skill_pack",
+      "condition": "is_frontend",
+      "action": "setup_sh_clone",
+      "description": "Advanced UI/UX design rules and patterns."
+    },
+    {
+      "id": "system-prompts-and-models-of-ai-tools",
+      "url": "https://github.com/x1xhlol/system-prompts-and-models-of-ai-tools",
+      "type": "index_only",
+      "condition": "always",
+      "action": "rag_search_only",
+      "description": "Collection of system prompts for various AI tools (127k stars)."
+    },
+    {
+      "id": "ai-research-skills",
+      "url": "https://github.com/Orchestra-Research/AI-Research-SKILLs",
+      "type": "skill_pack",
+      "condition": "always",
+      "action": "setup_sh_clone",
+      "description": "Collection of skills for AI research and data analysis."
+    }
+  ],
+  "tech_stack_mapping": {
+    "expo": [
+      {
+        "repo": "mrgoonie/claudekit-skills",
+        "skill": "react-native-best-practices"
+      },
+      { "repo": "mrgoonie/claudekit-skills", "skill": "expo-app-design" }
+    ],
+    "react-native": [
+      {
+        "repo": "mrgoonie/claudekit-skills",
+        "skill": "react-native-best-practices"
+      }
+    ],
+    "nestjs": [
+      { "repo": "snyk/agent-scan", "skill": "agent-scan" },
+      { "repo": "skills/testing", "skill": "jest-mastery" },
+      { "repo": "skills/nestjs", "skill": "nestjs-testing-patterns" }
+    ],
+    "nextjs": [
+      { "repo": "mrgoonie/claudekit-skills", "skill": "next-best-practices" }
+    ]
+  }
+}

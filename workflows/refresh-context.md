@@ -17,6 +17,7 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
 | `<!-- PRESERVED -->` / Human Notes | Never touch. Skip entirely                                                                                     |
 | Sections without marker            | Show diff, ask user — could be human-added knowledge                                                           |
 | New sections from scan             | Append at end of file, mark `<!-- AUTO-GENERATED -->`                                                          |
+| `.agent/setup.sh`                  | **MERGE ONLY**: only add/remove entries in `REQUIRED_SKILLS=(...)` array. NEVER overwrite or regenerate file   |
 
 ## Steps
 
@@ -45,9 +46,11 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
    - Everything else → **Legacy/Flat**
      Build a Module Classification table with: name, pattern, file count, key entry point.
 
-4. **[NEW]** Scan Shared/Common Code:
-   - Detect `src/common/`, `src/shared/`, `src/core/`, `libs/`
-   - List key utils, decorators, guards, interceptors → add to buffer
+4. **[NEW]** Deep Scan Shared/Common Code:
+   - Detect directories like `src/common/`, `src/shared/`, `src/core/`, `libs/`, `utils/`, `helpers/`, `constants/`.
+   - **CRITICAL**: Do NOT just list filenames. You MUST use tools like `grep_search` with regex (e.g., `export (const|function|class|interface)`) to extract the actual names, signatures, and purposes of exported items.
+   - Go deep into the files to understand what utils are actually available (e.g. `formatDate(date: string)`, `RolesGuard`).
+   - Add this deep index of common utilities to the context buffer so the AI knows exactly which utils to reuse before writing duplicate code.
 
 5. **[NEW]** Detect Docs Path & Create Folders:
    - Locate main documentation folder (usually `docs/`)
@@ -74,6 +77,9 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
    ```
    # Project Context
    ## Overview (Type, Framework, Language, Docs Path, Verification Command)
+   ## Auto-Generated Documentation
+   - Core Utilities Map: `docs/core-utils.md` -> ALWAYS review this before writing new utility functions or helpers to reuse existing logic.
+   - Modules Index: `docs/INDEX.md` -> Check this for architecture of specific modules.
    ## Tech Stack
    ## Module Classification
    ## Shared/Common Code (Key utils/services)
@@ -81,6 +87,14 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
    ## Conventions (Naming, Testing, Git)
    ## Proactive Quality Checks
    ## Key Entry Points
+   ## Workflow Hints <!-- PRESERVED -->
+   <!-- Project-specific guidance for global workflows. Agent reads these automatically. -->
+   | Workflow | Hints |
+   |----------|-------|
+   | test     | |
+   | verify   | |
+   | review   | |
+   | refactor | |
    ## Human Notes <!-- PRESERVED -->
    ```
 
@@ -93,27 +107,47 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
     - Guess module association based on skill name (e.g. `stripe` → `payment` module)
     - Ask user to review/adjust the auto-generated mapping table before saving to `project-context/SKILL.md`
 
-11. Generate Module Documentation (`/scan-modules` logic):
-    - For each module detected in Step 3, generate `docs/<module>/README.md`:
-      - List pattern, structure, key files (controllers, services, entities, etc)
-      - List dependencies (imports/exports from `*.module.ts`)
-    - Generate `docs/INDEX.md` listing all modules and linking to their READMEs.
-    - Ask user: "Do you want to generate/update the docs/<module> READMEs now? [Y/n]"
+11. **[NEW]** Generate / Update `.agent/setup.sh` (Interactive Skill Setup):
 
-12. Create scaffolding if not exists:
+    > **🚨 ABSOLUTE RULE: NEVER OVERWRITE `.agent/setup.sh`. MERGE ONLY.**
+    > The setup.sh file contains project-specific logic (IDE symlinks, Git tracking, scaffolding) that took significant effort to create.
+    > You are ONLY allowed to ADD or REMOVE entries in the `REQUIRED_SKILLS=(...)` array.
+    > If you cannot find a `REQUIRED_SKILLS` array in the file, DO NOT TOUCH THE FILE. Ask user for guidance.
+    > If `npx skills` fails, report the error and STOP. Do NOT generate any fallback script.
+
+    **Sub-steps:**
+
+    a. Parse the detected core tech stack AND major dependencies from `package.json` (e.g. `@sentry/react-native` → sentry, `firebase`, `stripe`, `@reduxjs/toolkit` → redux).
+    b. Look up `ai-dev-toolkit/rules/skill-registry.json` → match `tech_stack_mapping` entries.
+    c. Run `npx skills find <keyword>` for BOTH the core tech stack AND each major dependency discovered. If this command fails, report the error and continue with registry-only results.
+    d. **PROPOSAL ONLY (STOP & ASK)**: Present the combined list of recommended skills. Ask: "I recommend these skills for your project. Which ones should I include?"
+    e. **WAIT FOR EXPLICIT CONFIRMATION** (Rule 2).
+    f. Check if `.agent/setup.sh` already exists:
+    - **EXISTS** → Use `replace_file_content` tool to MERGE: only update the `REQUIRED_SKILLS=(...)` array with the confirmed skill list. DO NOT modify ANY other lines in the file.
+    - **DOES NOT EXIST** → Copy `ai-dev-toolkit/scripts/setup-agent-template.sh` to `.agent/setup.sh`, inject confirmed skill names into `__INJECT_REQUIRED_SKILLS__`, and run `chmod +x .agent/setup.sh`.
+
+12. Generate Architect & Utilities Documentation (`/scan-modules` logic):
+    - **12a. Core Utilities Map**: Use the deep scan buffer from Step 4 to generate `docs/core-utils.md`. Record all available utility functions, helpers, decorators, and constants.
+      - **⚠️ ANTI-BLOAT RULE**: Keep this file EXTREMELY COMPACT. List only the filename, function signature (name + primary args), and a 3-word purpose. Do NOT include raw code bodies or excessive markdown formatting. This file serves as a rapid-lookup dictionary for the AI.
+    - **12b. Business Modules**: For each module detected in Step 3, if no docs folder exists → create `docs/modules/<module-name>/` and generate `docs/modules/<module-name>/README.md`:
+      - List pattern, structure, key files, and dependencies
+    - **12c. Main Index**: Generate `docs/INDEX.md` listing all modules and linking to their auto-generated READMEs and the compact `docs/core-utils.md` map.
+
+13. Create scaffolding if not exists:
     - `tasks/todo.md` — empty checklist
     - `tasks/lessons.md` — empty lessons file
 
-13. IMPORTANT: Do NOT copy global skills into `.agent/skills/`.
+14. IMPORTANT: Do NOT copy global skills into `.agent/skills/`.
     `.agent/skills/` is for project-specific skills ONLY.
-    Global skills live in `~/.agents/skills/` (managed by setup script).
+    Global skills live in `~/.agents/skills/` (managed by `npx skills`).
 
-14. Report summary to user:
+15. Report summary to user:
     - Project type & Build command detected
     - Module classification table
     - Shared code found
     - New docs folders created
     - Topic-Skill mapping generated
+    - Interactive Skill Setup completed
     - Files created/updated
 
 ## Staleness Check (for other workflows)

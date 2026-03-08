@@ -7,8 +7,8 @@ description: Verification checklist before declaring any task complete. Evidence
 2. For EACH checklist item, verify it is actually implemented:
    - Open the file and confirm the change exists
    - Not just "addressed" — actually working
-3. Run project's Verification Command (from project-context). If missing, ask user.
-4. Fix any type/lint errors found
+3. Run project's Verification Command (from project-context). If missing, ask user. IMPORTANT: `cd` to project root and `source ~/.zshrc` before running!
+4. Fix type/lint errors ONLY in the files you modified. Do NOT touch other files.
 5. Report explicitly:
    - ✅ Done items (with file paths)
    - ❌ Remaining items (with reasons)

@@ -13,6 +13,10 @@
 
 set -e
 
+# Parse --force flag
+FORCE=false
+for arg in "$@"; do [ "$arg" = "--force" ] && FORCE=true; done
+
 # Resolve symlinks (needed when running via npx — npm creates symlinks in .bin/)
 SOURCE="$0"
 while [ -L "$SOURCE" ]; do
@@ -34,11 +38,23 @@ echo "   Project: $(pwd)"
 echo ""
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Step 1: Manual Global Rules Note
+# Step 1: Update Global Rules → ~/.gemini/GEMINI.md
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-echo "📝 Step 1: Global rules (GEMINI.md)"
-echo "   ⚠️  Please manually copy the contents of user-rules/memory-rules.md"
-echo "   to your IDE Settings -> User Rules."
+echo "📝 Step 1: Global rules"
+mkdir -p "$HOME/.gemini"
+
+if [ -f "$TOOLKIT_DIR/user-rules/memory-rules.md" ]; then
+  if cmp -s "$TOOLKIT_DIR/user-rules/memory-rules.md" "$GEMINI_RULES"; then
+    echo "   ✅ $GEMINI_RULES is up-to-date"
+  else
+    # Try to copy, but don't fail the whole script if macOS blocks it
+    cp "$TOOLKIT_DIR/user-rules/memory-rules.md" "$GEMINI_RULES" 2>/dev/null || \
+    cat "$TOOLKIT_DIR/user-rules/memory-rules.md" > "$GEMINI_RULES" 2>/dev/null || \
+    echo "   ⚠️  Could not update $GEMINI_RULES (macOS operation not permitted). Please copy manually."
+  fi
+else
+  echo "   ⚠️  memory-rules.md not found in toolkit."
+fi
 echo ""
 
 
@@ -53,8 +69,8 @@ if [ -d "$TOOLKIT_DIR/skills" ]; then
   for skill_dir in "$TOOLKIT_DIR/skills"/*/; do
     skill_name=$(basename "$skill_dir")
     if [ -f "$skill_dir/SKILL.md" ]; then
-      # Copy to ~/.agents/skills/ (actual location)
-      cp -r "$skill_dir" "$AGENTS_SKILLS_DIR/"
+      # Copy to ~/.agents/skills/ (actual location) and suppress xattr/permission errors
+      cp -r "$skill_dir" "$AGENTS_SKILLS_DIR/" 2>/dev/null || true
       # Create symlink in ~/.gemini/antigravity/skills/ (Antigravity reads here)
       ln -sf "$AGENTS_SKILLS_DIR/$skill_name" "$ANTIGRAVITY_SKILLS_DIR/$skill_name" 2>/dev/null || true
       echo "   ✅ $skill_name"
@@ -67,33 +83,53 @@ fi
 echo ""
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Step 2.5: Install community skills (global)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+echo "🌐 Step 2.5: Community skills (global)"
+COMMUNITY_SKILLS=(
+  "obra/superpowers --skill systematic-debugging"
+  "supercent-io/skills-template --skill backend-testing"
+  "supercent-io/skills-template --skill security-best-practices"
+  "sickn33/antigravity-awesome-skills --skill context-management-context-restore"
+)
+for skill_spec in "${COMMUNITY_SKILLS[@]}"; do
+  echo "   Installing: $skill_spec"
+  npx -y skills add $skill_spec -g -y 2>/dev/null \
+    && echo "   ✅ Done" \
+    || echo "   ⚠️  Failed (network issue or already installed)"
+done
+echo ""
+
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Step 3: Install workflows (Global & Project)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ANTIGRAVITY_WORKFLOWS_DIR="$HOME/.gemini/antigravity/workflows"
 echo "📋 Step 3: Installing workflows"
 
+# Helper: copy workflows with no-overwrite (unless --force)
+copy_workflows() {
+  local dest="$1"
+  mkdir -p "$dest"
+  for wf in "$TOOLKIT_DIR/workflows"/*.md; do
+    local wf_name=$(basename "$wf")
+    local target="$dest/$wf_name"
+    if [ ! -f "$target" ] || [ "$FORCE" = true ]; then
+      cp "$wf" "$target" 2>/dev/null || true
+      echo "      ✅ $([ "$FORCE" = true ] && echo 'Updated' || echo 'Added'): $wf_name"
+    else
+      echo "      ⏭️  Skipped (exists): $wf_name"
+    fi
+  done
+}
+
 # 1. Install Global Workflows
 echo "   🌍 Global → $ANTIGRAVITY_WORKFLOWS_DIR/"
-mkdir -p "$ANTIGRAVITY_WORKFLOWS_DIR"
-if [ -d "$TOOLKIT_DIR/workflows" ]; then
-  for wf in "$TOOLKIT_DIR/workflows"/*.md; do
-    wf_name=$(basename "$wf")
-    cp "$wf" "$ANTIGRAVITY_WORKFLOWS_DIR/"
-    echo "      ✅ $wf_name"
-  done
-fi
+copy_workflows "$ANTIGRAVITY_WORKFLOWS_DIR"
 
 # 2. Install Project Workflows
 echo "   📁 Project → $PROJECT_AGENT_DIR/workflows/"
 if [ -d ".git" ] || [ -d "$PROJECT_AGENT_DIR" ]; then
-  mkdir -p "$PROJECT_AGENT_DIR/workflows"
-  if [ -d "$TOOLKIT_DIR/workflows" ]; then
-    for wf in "$TOOLKIT_DIR/workflows"/*.md; do
-      wf_name=$(basename "$wf")
-      cp "$wf" "$PROJECT_AGENT_DIR/workflows/"
-      echo "      ✅ $wf_name"
-    done
-  fi
+  copy_workflows "$PROJECT_AGENT_DIR/workflows"
 else
   echo "      ⚠️  Not in a project directory (no .git or .agent found)"
   echo "      Run this script from inside your project folder to install workspace workflows"
@@ -128,8 +164,9 @@ fi
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ All done! Summary:"
-echo "   📝 Rules   → ~/.gemini/GEMINI.md (backed up old version)"
-echo "   📦 Skills  → ~/.agents/skills/ (symlinked to Antigravity)"
-echo "   📋 Workflows → .agent/workflows/ (this project)"
+echo "   📝 Rules     → ~/.gemini/GEMINI.md"
+echo "   📦 Skills    → ~/.agents/skills/ (self-written + community)"
+echo "   📋 Workflows → global + project $([ "$FORCE" = true ] && echo '(force-updated)' || echo '(new only)')"
+echo "   💡 Use --force to overwrite existing project workflows"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""

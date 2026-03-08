@@ -38,9 +38,9 @@ V. WORKFLOW ORCHESTRATION
     - Use plan mode for verification steps, not just building
     - Write detailed specs upfront to reduce ambiguity
 20. Self-Improvement Loop:
-    - After ANY correction from the user: update `tasks/lessons.md` with the pattern
+    - After ANY correction from the user: capture the lesson
     - Write rules for yourself that prevent the same mistake
-    - Review lessons at session start for relevant project
+    - Route lessons to `docs/<module>/decisions/` (permanent knowledge)
 21. Demand Elegance & Ask User Vision First:
     - For architectural decisions: ask user's preferred approach BEFORE proposing yours
     - User often has better high-level insight (e.g. unified approach vs 3 separate paths)
@@ -57,14 +57,10 @@ V. WORKFLOW ORCHESTRATION
     - Zero context switching required from the user
 
 VI. TASK MANAGEMENT
-23. Plan First: Write plan to `tasks/todo.md` with checkable items
-24. Verify Plan: Check in before starting implementation
-25. Track Progress: Mark items complete as you go
-26. Single Source of Truth: After user confirms ANY decision, IMMEDIATELY update implementation plan or report file. Plan must reflect all confirmed decisions.
-27. Document Results: Add review section to `tasks/todo.md`
-28. Capture Lessons: Update `tasks/lessons.md` after corrections
-    - `tasks/lessons.md` = AI session notes (temporary, self-improvement)
-    - `docs/<module>/decisions/` = permanent team knowledge (committed to git)
+23. For multi-step tasks: track progress in conversation or IDE's built-in task system.
+    Do NOT create external files (tasks/todo.md, tasks/lessons.md) unless user explicitly requests.
+24. Single Source of Truth: After user confirms ANY decision, IMMEDIATELY update the implementation plan.
+25. Capture lessons in `docs/<module>/decisions/` (permanent knowledge, committed to git).
 
 VII. CORE PRINCIPLES
 28. Simplicity First: Make every change as simple as possible. Impact minimal code.
@@ -98,8 +94,11 @@ X. VERIFICATION BEFORE DONE (MANDATORY)
 39. Before declaring ANY task complete, you MUST:
     a. Re-read the original plan/checklist
     b. Confirm EACH item is actually implemented (not just "addressed")
-    c. Run `npx tsc --noEmit` for TypeScript projects and fix ALL errors
-    d. If ANY lint/type error remains, fix it BEFORE reporting done
+    c. Run type check/linting ONLY on files you modified during this task
+       (e.g., `npx eslint path/to/file.ts`). If errors appear in OTHER files,
+       IGNORE them — do NOT fix, report, or investigate.
+    d. When running terminal commands, ALWAYS `cd` to the project root first
+       and `source ~/.zshrc` to prevent "command not found" or permission errors.
 40. If implementation is partial, EXPLICITLY state:
     - ✅ What IS done (with file list)
     - ❌ What is NOT done yet (with reasons)
@@ -132,10 +131,38 @@ XII. AUTO-WORKFLOW DETECTION
 XIII. CONTEXT-AWARE SKILL LOADING
 48. At conversation start, always read `project-context/SKILL.md` (if exists).
 49. Lazy-load specific rule/skill files via the Topic-Skill Mapping table in `project-context`.
-50. Never load all skills upfront. Only load when the topic/module is affected (e.g., TS project → load `typescript-mastery`).
+50. Never load all skills upfront. Only load when the topic/module is affected.
+51. Global Skill Trigger Map — when detecting these patterns, load the matching skill:
 
-XIV. SESSION CONTEXT MANAGEMENT
-51. For tasks requiring 3+ steps, maintain `tasks/session-context.md`.
-52. Store current module, loaded skills, key files, and current objective.
-53. On context recovery (e.g., conversation truncated or new session), read `session-context.md` first to restore state.
+    | Trigger | Skill to Load |
+    |---------|---------------|
+    | Bug report, error trace, "not working" | `systematic-debugging` |
+    | Writing or reviewing TypeScript | `typescript-mastery` |
+    | Code review, PR review, `/review` | `code-review` |
+    | Git commit, branch, PR, `/pr` | `git-workflow` |
+    | DDD module detected in SKILL.md | `ddd-core-rules` |
+    | Session > 15 messages, large outputs | `context-compression` |
+    | Context feels stale or uncertain | `context-optimization` |
+    | Writing or improving tests, `/test` | `backend-testing` |
+    | Security review, auth code, secrets | `security-best-practices` |
+    | Context lost after chunk/truncation | `context-management-context-restore` |
+
+    After loading a skill, briefly note: "📚 Loaded: <skill-name>".
+
+XIV. TOKEN & CONTEXT MANAGEMENT
+52. Long Logs/Output Strategy:
+    - NEVER paste entire logs into context. Read TAIL first (last 50 lines).
+    - Use `grep_search` for keywords: error, exception, failed, stack trace.
+    - Summarize findings; do NOT keep raw logs in conversation.
+53. Selective File Loading:
+    - Use `view_file_outline` BEFORE reading full files.
+    - Read only relevant functions/sections, not entire files.
+    - When referencing code, use file paths instead of copying full content.
+54. Context Loss Detection (CRITICAL):
+    - If uncertain about current task, file context, or previous decisions — STOP and ASK:
+      "I may have lost context. Can you confirm: [your understanding]?"
+    - Do NOT guess. Do NOT make changes based on stale context.
+    - Signs: unclear task objective, referencing unread files, contradicting previous decisions.
+55. Terminal Commands:
+    - ALWAYS `cd` to project root and `source ~/.zshrc` before running commands.
 ```
