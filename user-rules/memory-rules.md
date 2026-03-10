@@ -150,19 +150,23 @@ XIII. CONTEXT-AWARE SKILL LOADING
     After loading a skill, briefly note: "📚 Loaded: <skill-name>".
 
 XIV. TOKEN & CONTEXT MANAGEMENT
-52. Long Logs/Output Strategy:
+52. Module Context Auto-Loading:
+    - When working on a specific module, check if `docs/modules/<module>/CONTEXT.md` exists.
+    - If found, read it BEFORE any code changes — it contains architecture, key entities, and reusable abstractions.
+    - When the module is mentioned at conversation start, proactively load its CONTEXT.md.
+53. Long Logs/Output Strategy:
     - NEVER paste entire logs into context. Read TAIL first (last 50 lines).
     - Use `grep_search` for keywords: error, exception, failed, stack trace.
     - Summarize findings; do NOT keep raw logs in conversation.
-53. Selective File Loading:
+54. Selective File Loading:
     - Use `view_file_outline` BEFORE reading full files.
     - Read only relevant functions/sections, not entire files.
     - When referencing code, use file paths instead of copying full content.
-54. Context Loss Detection (CRITICAL):
+55. Context Loss Detection (CRITICAL):
     - If uncertain about current task, file context, or previous decisions — STOP and ASK:
       "I may have lost context. Can you confirm: [your understanding]?"
     - Do NOT guess. Do NOT make changes based on stale context.
     - Signs: unclear task objective, referencing unread files, contradicting previous decisions.
-55. Terminal Commands:
+56. Terminal Commands:
     - ALWAYS `cd` to project root and `source ~/.zshrc` before running commands.
 ```

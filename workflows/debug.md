@@ -20,4 +20,3 @@ description: Step-by-step debugging methodology. Trace data flow through layers.
 10. If more context needed → read 50 lines before error
 11. Use `grep_search` for keywords: error, exception, failed, stack trace
 12. NEVER load entire log into context window
-13. Summarize findings into `session-context.md`

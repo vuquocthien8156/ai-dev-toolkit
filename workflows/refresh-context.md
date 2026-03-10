@@ -44,7 +44,7 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
    - Has nested `modules/` inside → **Composite**
    - Has `model/` + `view/` + `controller/` → **MVC**
    - Everything else → **Legacy/Flat**
-     Build a Module Classification table with: name, pattern, file count, key entry point.
+     Build a Module Classification table with: name, pattern, file count, key entry point, **context file** (check if `docs/modules/<module>/CONTEXT.md` exists).
 
 4. **[NEW]** Deep Scan Shared/Common Code:
    - Detect directories like `src/common/`, `src/shared/`, `src/core/`, `libs/`, `utils/`, `helpers/`, `constants/`.
@@ -98,8 +98,59 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
    ## Human Notes <!-- PRESERVED -->
    ```
 
-9. Generate `.agent/skills/knowledge-router/SKILL.md`:
-   - (Same content as previous init-project, routing rules for decisions, patterns, lessons)
+9. Generate `.agent/skills/knowledge-router/SKILL.md` using this template:
+
+   ```markdown
+   ---
+   name: knowledge-router
+   description: Rules for classifying and saving knowledge into project docs.
+   ---
+
+   # Knowledge Router
+
+   ## Core Principle
+
+   Do not lose valuable context. If we discover a complex bug, architecture decision,
+   or project-specific pattern, it MUST be extracted and saved.
+
+   ## Quality Rules (Essence Distillation)
+
+   - DISTILL, never summarize. Remove noise; keep decision-grade core.
+   - Format: [Context] → [Decision/Rule] → [Condition/Scope] in 1-2 sentences.
+   - Each entry must be SELF-CONTAINED (readable without conversation history).
+   - Preserve critical: numbers, thresholds, file paths, environment scope.
+   - If content is mostly noise, save nothing rather than weak knowledge.
+
+   ## Invalidation Rules
+
+   Before writing NEW knowledge, ALWAYS check existing docs for contradictions:
+
+   - Completed phases still marked "in progress" → UPDATE or REMOVE
+   - Decisions reversed in later conversations → REMOVE stale entry
+   - Rules that conflict with current codebase → UPDATE
+     Priority: Remove stale → Update changed → Add new.
+
+   ## Where to Save What
+
+   | Type                                    | Location                                 | Format                         |
+   | --------------------------------------- | ---------------------------------------- | ------------------------------ |
+   | Business rules & architecture decisions | `docs/<module>/decisions/`               | `NNN-short-name.md`            |
+   | Module living knowledge & architecture  | `docs/modules/<module>/CONTEXT.md`       | Single file per module         |
+   | Coding patterns & conventions           | `.agent/skills/project-context/SKILL.md` | Append to relevant section     |
+   | Repeatable agent workflows              | `.agent/workflows/`                      | `command-name.md`              |
+   | Lessons learned from corrections        | `docs/<module>/decisions/`               | Append to existing or new file |
+
+   ## Decision Merge Rule
+
+   Before creating a new decision file, search existing `decisions/` for the SAME TOPIC.
+   If found → APPEND a dated section (`## Update YYYY-MM-DD`). Only create new files for unrelated topics.
+
+   ## Trigger
+
+   At the end of a successful task, before declaring "DONE", evaluate:
+   "Did we establish a new pattern or figure out something complex?"
+   If Yes → Draft knowledge to the appropriate location. Ask for confirmation.
+   ```
 
 10. **[NEW]** Generate Topic-Skill Mapping table:
     - Scan `.agent/skills/` directory
@@ -133,9 +184,7 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
       - List pattern, structure, key files, and dependencies
     - **12c. Main Index**: Generate `docs/INDEX.md` listing all modules and linking to their auto-generated READMEs and the compact `docs/core-utils.md` map.
 
-13. Create scaffolding if not exists:
-    - `tasks/todo.md` — empty checklist
-    - `tasks/lessons.md` — empty lessons file
+13. (Removed — tasks/ scaffolding no longer used)
 
 14. IMPORTANT: Do NOT copy global skills into `.agent/skills/`.
     `.agent/skills/` is for project-specific skills ONLY.

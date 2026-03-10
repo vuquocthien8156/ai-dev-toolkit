@@ -53,6 +53,9 @@ This one command does:
 | 3    | Copies workflows to global + project (**skips existing** unless `--force`)  | ✅ Automatic |
 | 4    | Health check: bloated skills warning + cross-IDE symlinks                   | ✅ Automatic |
 
+> **Selective execution**: Use `--rules`, `--skills`, or `--workflows` to run only specific steps.
+> See [Updating](#updating) for details.
+
 ### Step 3: Verify in Antigravity
 
 1. Open Antigravity → **Customizations** → **Rules** tab
@@ -287,12 +290,40 @@ When you update this toolkit repo:
 cd ~/Documents/ai-dev-toolkit
 git pull   # or edit files directly
 
-# 2. Re-run setup in each project
+# 2. Re-run setup in each project (runs all steps)
 cd ~/Documents/Zigvy/hr-forte/hr-leave-module
 ~/Documents/ai-dev-toolkit/scripts/setup-antigravity.sh
 ```
 
-The script behavior:
+### Selective Updates
+
+Instead of running everything, use flags to run only what you need:
+
+```bash
+# Only update workflows (most common after editing .md files)
+setup-antigravity.sh --workflows --force
+
+# Only refresh global rules
+setup-antigravity.sh --rules
+
+# Only reinstall skills
+setup-antigravity.sh --skills
+
+# Combine flags
+setup-antigravity.sh --rules --workflows --force
+```
+
+### Flag Reference
+
+| Flag          | What it does                         |
+| ------------- | ------------------------------------ |
+| _(no flags)_  | Runs ALL steps (default)             |
+| `--rules`     | Only Step 1: update global rules     |
+| `--skills`    | Only Steps 2+2.5: install all skills |
+| `--workflows` | Only Step 3: copy workflows          |
+| `--force`     | Overwrite existing files (any step)  |
+
+### Overwrite Behavior
 
 | Component | Default behavior   | With `--force`     |
 | --------- | ------------------ | ------------------ |
@@ -307,10 +338,12 @@ The script behavior:
 ## Adding to a New Project
 
 ```bash
-# Usage:
-#   cd <your-project>
-#   ~/Documents/ai-dev-toolkit/scripts/setup-antigravity.sh
-#   ~/Documents/ai-dev-toolkit/scripts/setup-antigravity.sh --force  # Reset existing workflows
+# Full setup (first time)
+cd <your-project>
+~/Documents/ai-dev-toolkit/scripts/setup-antigravity.sh
+
+# Quick workflow sync (after editing a workflow)
+~/Documents/ai-dev-toolkit/scripts/setup-antigravity.sh --workflows --force
 ```
 
 That's it. The script creates `.agent/workflows/` in the project and installs global skills + rules.

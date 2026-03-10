@@ -9,21 +9,31 @@ description: Refactor code for quality and architecture alignment. Action-orient
    - Which files/modules?
    - What outcome? (extract, move, simplify, type-fix)
 
-2. Capture baseline BEFORE changes:
+2. Define **Scope Contract** BEFORE touching code:
+
+   | Category          | Files                                  |
+   | ----------------- | -------------------------------------- |
+   | **IN SCOPE**      | (list files/dirs explicitly)           |
+   | 🚫 **OFF-LIMITS** | Everything outside the refactor target |
+
+   > DO NOT refactor unrelated code, even if it looks messy.
+   > DO NOT introduce new patterns — follow existing conventions.
+
+3. Capture baseline BEFORE changes:
 
    ```
    cd <project-root> && source ~/.zshrc && <verify-command-from-SKILL.md>
    ```
 
-3. Apply refactoring (pick applicable):
+4. Apply refactoring (pick applicable):
    - **Extract**: Break large files (>300 lines) into focused units
    - **Move**: Relocate code to correct layer (per module pattern in SKILL.md)
    - **Simplify**: Remove dead code, consolidate duplicates
    - **Type**: Replace `any` with proper interfaces, add return types
    - **Rename**: Fix inconsistent naming conventions
 
-4. After refactoring, verify baseline still passes:
+5. After refactoring, verify baseline still passes:
    - Type check on modified files only
    - Run related tests
 
-5. Document significant structural changes if applicable.
+6. Document significant structural changes if applicable.
