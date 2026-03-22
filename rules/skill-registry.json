@@ -65,6 +65,14 @@
       "condition": "always",
       "action": "setup_sh_clone",
       "description": "Collection of skills for AI research and data analysis."
+    },
+    {
+      "id": "skill-creator",
+      "url": "https://github.com/anthropics/skills/tree/main/skills/skill-creator",
+      "type": "skill_pack",
+      "condition": "always",
+      "action": "reference_only",
+      "description": "Anthropic's official skill for creating and improving AI skills. Interview flow, test cases, eval framework, iterative improvement loop."
     }
   ],
   "tech_stack_mapping": {

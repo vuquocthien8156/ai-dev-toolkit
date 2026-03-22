@@ -33,6 +33,23 @@ Use after feature discussions, business logic decisions, or complex bug fixes.
    - If found → **APPEND** a new dated section (`## Update YYYY-MM-DD`) to the existing file
    - Only create a new file when the topic is **completely unrelated** to all existing decisions
 
+4b. **File creation gate** — A new file is justified ONLY when ALL of these are true:
+   - Topic is unrelated to ALL existing files in `decisions/` AND `flows/`
+   - Contains ≥3 distinct decision points (not a single fix note)
+   - Knowledge is reusable (not a one-off bug fix absorbed into code)
+   - If in doubt, APPEND to existing file rather than creating new
+
+4c. **Consolidation check** — Before creating, also check:
+   - Could this be a section in an existing `flows/*.md`?
+   - Could this update `CONTEXT.md` directly (if architecturally significant)?
+   - Could this append to `decision-log.md` (if it's a small tactical choice)?
+
+4d. **Naming guidelines**:
+   - Use descriptive kebab-case: `webhook-idempotency-strategy.md` ✅
+   - Date prefix ONLY for time-sensitive decisions: `2026-03-09-fix-tenant-isolation.md`
+   - NO date prefix for permanent architectural docs: `offline-pay-later-architecture.md` ✅
+   - Avoid generic names: `fix.md` ❌, `notes.md` ❌
+
 5. Draft the document following the Essence Distillation rules above:
    - Title, Date, Context
    - Problem/Background (1-2 sentences max)

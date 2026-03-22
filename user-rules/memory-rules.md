@@ -25,6 +25,7 @@ II. RESPONSE PROTOCOL (MANDATORY)
    - Strategy: Proposed logic/architecture.
    - Constraints: Types, potential risks.
    - Question Gate: End with a specific question to clarify ambiguous points OR a request for confirmation to proceed to the next analysis phase.
+   - Skills Used: If any skills were loaded during the task, list them with reason (e.g., "📚 ddd-core-rules — DDD module detected"). Omit if no skills used.
 6. Formatting: Use a Horizontal Rule ("---") to separate sections. Code must ALWAYS be at the very end, and ONLY after Confirmation.
 
 IV. PROJECT AWARENESS
@@ -37,6 +38,18 @@ V. WORKFLOW ORCHESTRATION
     - If something goes sideways, STOP and re-plan immediately — don't keep pushing
     - Use plan mode for verification steps, not just building
     - Write detailed specs upfront to reduce ambiguity
+    - Named Plans: NEVER use generic names like `implementation_plan.md`.
+      Each plan MUST have a descriptive name matching its purpose.
+      Examples: `auth-google-signin-plan.md`, `fix-invoice-status-plan.md`, `refactor-discount-service-plan.md`.
+19b. File Map Contract (for non-trivial tasks with 3+ files):
+    - MUST create a File Map table before implementation:
+      | Category | Files | Notes |
+      |----------|-------|-------|
+      | **MODIFY** | `path/to/file.ts` | What changes |
+      | **CREATE** | `path/to/new.ts` | Purpose |
+      | **READ** (context only) | `path/to/ref.ts` | Why reading |
+      | 🚫 **OFF-LIMITS** | `path/to/unrelated/` | Reason |
+    - The File Map is a strict contract. Do NOT modify files outside MODIFY/CREATE.
 20. Self-Improvement Loop:
     - After ANY correction from the user: capture the lesson
     - Write rules for yourself that prevent the same mistake
@@ -89,6 +102,11 @@ IX. KNOWLEDGE ROUTING (Self-Organizing)
     - Repeatable processes → .agent/workflows/
     - Lessons learned → docs/<module>/decisions/
 38. After corrections, update docs with the lesson learned
+38b. Evolution Criteria — only preserve knowledge that meets at least ONE:
+    - Reusable across projects or modules (not one-off)
+    - Counter-intuitive (someone would likely get it wrong without this)
+    - Costly to rediscover (took significant debugging/research effort)
+    - If content is mostly noise, save NOTHING rather than weak knowledge.
 
 X. VERIFICATION BEFORE DONE (MANDATORY)
 39. Before declaring ANY task complete, you MUST:
@@ -99,6 +117,18 @@ X. VERIFICATION BEFORE DONE (MANDATORY)
        IGNORE them — do NOT fix, report, or investigate.
     d. When running terminal commands, ALWAYS `cd` to the project root first
        and `source ~/.zshrc` to prevent "command not found" or permission errors.
+    e. Define exact verification commands UPFRONT in the plan (not after the fact).
+       Example: `yarn ts:check`, `npx eslint <modified-files>`, `yarn test -- --grep "module"`.
+39b. Auto-Verify: After completing ALL items in an implementation plan,
+    AUTOMATICALLY run `/verify` workflow and report results.
+    Do NOT wait for user to trigger `/verify` manually.
+39c. Verification Red Flags — if you catch yourself doing any of these, STOP:
+    - Using words: "should work", "probably passes", "likely fine"
+    - Trusting another agent's claim without own evidence
+    - Checking only the happy path, skipping edge cases
+    - Running partial tests (1 of N suites) and claiming "tests pass"
+    - Not checking exit codes after terminal commands
+    - Claiming done based on "no errors visible" without reading full output
 40. If implementation is partial, EXPLICITLY state:
     - ✅ What IS done (with file list)
     - ❌ What is NOT done yet (with reasons)
@@ -125,11 +155,15 @@ XI. LANGUAGE RULE (STRICT)
 XII. AUTO-WORKFLOW DETECTION
 44. Auto-detect request type and trigger matching workflow from `.agent/workflows/` (fallback to global).
 45. Bug reports → auto-run `/debug`.
-46. Feature requests → auto-run `/plan` and ask for confirmation.
+46. Feature requests → auto-enter plan mode (Rule 19) and ask for confirmation.
 47. Task completion → auto-run `/verify`.
 
 XIII. CONTEXT-AWARE SKILL LOADING
 48. At conversation start, always read `project-context/SKILL.md` (if exists).
+48b. Context Partition Awareness: After reading the hub (SKILL.md or CONTEXT.md),
+    check its routing table and decide which partitions to load for the current task.
+    Report in Conceptual Report: "📂 Context loaded: [list partitions]".
+    If loading hub only (no partitions), explain why none were needed.
 49. Lazy-load specific rule/skill files via the Topic-Skill Mapping table in `project-context`.
 50. Never load all skills upfront. Only load when the topic/module is affected.
 51. Global Skill Trigger Map — when detecting these patterns, load the matching skill:

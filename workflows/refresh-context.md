@@ -98,6 +98,43 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
    ## Human Notes <!-- PRESERVED -->
    ```
 
+   **Context Splitting Rules (MANDATORY):**
+
+   - Project context hub SKILL.md MUST stay ≤150 lines (routing table + overview only)
+   - When generated content exceeds 200 lines → split into `references/` partitions
+   - Hub contains: Overview, Tech Stack, Module Classification, routing table to partitions
+   - Each partition should be 50-150 lines, focused on one topic
+
+   **Partition Template (for project SKILL.md):**
+
+   ```
+   project-context/
+   ├── SKILL.md                    ← Hub: overview + routing (≤150 lines)
+   └── references/
+       ├── architecture.md         ← Module patterns (DDD/Legacy/Composite rules)
+       ├── conventions.md          ← Naming, testing, git conventions
+       ├── infrastructure.md       ← CI/CD, deployment, Docker config
+       └── quality-checks.md       ← Proactive checks, verification commands
+   ```
+
+   Hub routing table example:
+   ```markdown
+   ## Context Partitions
+   | Topic | File | When to Load |
+   |-------|------|-------------|
+   | Module patterns, DDD rules | `references/architecture.md` | Working on DDD/Composite modules |
+   | Naming, testing conventions | `references/conventions.md` | Code review, new code |
+   | CI/CD, Docker, deployment | `references/infrastructure.md` | Deploy, Docker changes |
+   | Quality checks, verify cmds | `references/quality-checks.md` | Before declaring done |
+   ```
+
+   **Module CONTEXT.md Splitting (flexible, domain-specific):**
+
+   - Same ≤200 line threshold applies per module CONTEXT.md
+   - Partitions go into `docs/modules/<module>/context/` (not `references/`)
+   - Categories are domain-driven (NOT a fixed template) — agent proposes, user decides
+   - Hub keeps: Core concepts, ERD, key abstractions, routing table to partitions
+
 9. Generate `.agent/skills/knowledge-router/SKILL.md` using this template:
 
    ```markdown

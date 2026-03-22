@@ -32,6 +32,27 @@ description: Refactor code for quality and architecture alignment. Action-orient
    - **Type**: Replace `any` with proper interfaces, add return types
    - **Rename**: Fix inconsistent naming conventions
 
+4b. **Behavior Preservation Checklist** (MANDATORY after any refactoring):
+
+   **Before refactor** — document the public API surface:
+   - List all public inputs (params, DTOs) and their types
+   - List all return types and possible error types
+   - List all side effects (DB writes, API calls, events emitted, queue jobs)
+   - List edge case behaviors (null handling, empty arrays, default values)
+
+   **After refactor** — verify SAME surface preserved:
+   - ✅ Same inputs accepted, same outputs returned
+   - ✅ Same errors thrown for same invalid inputs
+   - ✅ Same side effects triggered in same order
+   - ✅ No new side effects introduced, none removed
+
+   **Red flags** — if ANY of these changed, the refactor altered behavior:
+   - Return type changed (even subtly: `T` → `T | undefined`)
+   - Error handling differs (catch scope, error types, rethrow)
+   - New side effect added or existing one removed
+   - Null/undefined behavior changed
+   - Method visibility changed (private → public or vice versa)
+
 5. After refactoring, verify baseline still passes:
    - Type check on modified files only
    - Run related tests

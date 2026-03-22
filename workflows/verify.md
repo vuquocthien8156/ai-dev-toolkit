@@ -14,3 +14,16 @@ description: Verification checklist before declaring any task complete. Evidence
    - ❌ Remaining items (with reasons)
    - ⚠️ Blocked items (needs user input)
 6. Only declare "done" when ALL items are ✅
+
+## Red Flags Checklist
+
+If you catch yourself doing ANY of these, your verification is INVALID. Stop and redo.
+
+- ❌ Using language: "should work", "probably passes", "likely fine", "looks good"
+- ❌ Trusting another agent's or tool's claim without running your OWN verification
+- ❌ Verifying only the happy path — skipping error cases, edge cases, empty inputs
+- ❌ Running partial tests (1 of N suites) and claiming "all tests pass"
+- ❌ Not checking exit codes after terminal commands (`echo $?`)
+- ❌ Claiming done based on "no errors visible" without reading FULL output
+- ❌ Skipping verification for "trivial" changes — ALL changes get verified
+- ❌ Declaring complete when the plan/checklist still has unchecked items
