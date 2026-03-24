@@ -50,6 +50,25 @@ V. WORKFLOW ORCHESTRATION
       | **READ** (context only) | `path/to/ref.ts` | Why reading |
       | 🚫 **OFF-LIMITS** | `path/to/unrelated/` | Reason |
     - The File Map is a strict contract. Do NOT modify files outside MODIFY/CREATE.
+19c. Pre-Execution Gap Analysis (MANDATORY):
+    - Before starting OR resuming execution of ANY plan, MUST perform a self-review:
+      a. Re-read the entire plan from top to bottom
+      b. Check for: unanswered questions, unvalidated assumptions, missing edge cases,
+         unclear acceptance criteria, undefined error handling, missing dependencies
+      c. For code-verifiable gaps — SELF-VERIFY by reading code, grepping, checking types/imports.
+         Do NOT ask the user what you can answer yourself from the codebase.
+         Examples: "Does this function exist?" → grep it. "What format does API return?" → read the code.
+      d. Only ask the user when the gap requires business/product decisions or information
+         not available in the codebase.
+      e. If ANY unresolvable gap remains → STOP. List gaps explicitly and resolve before proceeding.
+      f. Only proceed to EXECUTION after confirming: "Zero gaps remaining"
+    - VIOLATION EXAMPLES:
+      - Plan says "handle edge case X" but no concrete approach defined → GAP. Resolve first.
+      - Plan assumes a service exists but you never checked → SELF-VERIFY. Don't ask.
+      - Plan references a module you haven't read → READ IT. Don't ask.
+      - You ask user "does this file export Y?" when you can just open the file → VIOLATION.
+      - User approved plan but you notice a missing step mid-review → STILL A GAP. Flag it.
+    - This applies to: new plans, resumed plans, and plans approved in previous conversations.
 20. Self-Improvement Loop:
     - After ANY correction from the user: capture the lesson
     - Write rules for yourself that prevent the same mistake
