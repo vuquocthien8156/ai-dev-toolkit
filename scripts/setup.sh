@@ -28,6 +28,16 @@
 
 set -e
 
+# Resolve symlinks (needed when running via npx)
+SOURCE="$0"
+while [ -L "$SOURCE" ]; do
+  DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
+done
+SCRIPT_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
+TOOLKIT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+
 # Parse flags
 FORCE=false
 ONLY_RULES=false
@@ -54,16 +64,6 @@ if [ "$HAS_STEP_FLAG" = false ]; then
   ONLY_SKILLS=true
   ONLY_WORKFLOWS=true
 fi
-
-# Resolve symlinks (needed when running via npx)
-SOURCE="$0"
-while [ -L "$SOURCE" ]; do
-  DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
-  SOURCE="$(readlink "$SOURCE")"
-  [[ "$SOURCE" != /* ]] && SOURCE="$DIR/$SOURCE"
-done
-SCRIPT_DIR="$(cd "$(dirname "$SOURCE")" && pwd)"
-TOOLKIT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # Source of truth for skills
 AGENTS_SKILLS_DIR="$HOME/.agents/skills"
