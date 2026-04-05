@@ -18,11 +18,13 @@
 #   --skills      Only install skills (Steps 2 + 2.5)
 #   --workflows   Only copy workflows (Step 3)
 #   --ide <name>  Target IDE: antigravity, claude, or all (default: all)
+#   --clean       Clean global skills and IDE symlinks (Safe Reset)
 #
 # Examples:
 #   setup.sh                     # Run everything for all IDEs
 #   setup.sh --ide claude        # Only setup Claude Code
 #   setup.sh --workflows --force # Only update workflows, overwrite
+#   setup.sh --clean             # Reset global skills
 
 set -e
 
@@ -41,6 +43,7 @@ while [[ $# -gt 0 ]]; do
     --skills)     ONLY_SKILLS=true; HAS_STEP_FLAG=true; shift ;;
     --workflows)  ONLY_WORKFLOWS=true; HAS_STEP_FLAG=true; shift ;;
     --ide)        TARGET_IDE="$2"; shift 2 ;;
+    --clean)      "$SCRIPT_DIR/cleanup.sh"; exit 0 ;;
     *)            shift ;;
   esac
 done

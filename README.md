@@ -116,6 +116,12 @@ Rule 51 maps specific triggers to skills. The AI prints `📚 Loaded: <skill-nam
 
 ## Repository Structure
 
+# Run to update/reinstall:
+npx github:vuquocthien8156/ai-dev-toolkit --force
+
+# OR for a clean system reset (if skills feel broken/bloated):
+npx github:vuquocthien8156/ai-dev-toolkit --clean
+
 ```
 ai-dev-toolkit/
 │
@@ -131,17 +137,11 @@ ai-dev-toolkit/
 │   └── memory-rules.md                ← Tier 1 rules (→ GEMINI.md / CLAUDE.md)
 │
 ├── scripts/
-│   ├── setup.sh                       ← The multi-IDE installer
+│   ├── setup.sh                       ← Multi-IDE installer
+│   ├── cleanup.sh                     ← Safe system reset (Global skills/symlinks)
 │   └── skill-registry.json            ← Stack-to-skill mapping for /refresh-context
-  └── setup-agent-template.sh        ← Template for per-project .agent/setup.sh
 │
-├── cross-ide/                         ← Templates for other AI IDEs
-│   ├── CLAUDE.md
-│   ├── AGENTS.md
-│   └── .cursorrules
-│
-└── references/
-    └── skill-discovery.md             ← How to find and install new skills
+└── .gitignore                         ← Configured for clean repo
 ```
 
 ---

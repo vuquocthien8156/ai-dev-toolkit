@@ -1,4 +1,7 @@
 # OS
+.npmignore
+.agent/
+.claude/
 .DS_Store
 Thumbs.db
 
