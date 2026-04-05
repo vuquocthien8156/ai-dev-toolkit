@@ -240,7 +240,7 @@ XIII. CONTEXT-AWARE SKILL LOADING
     | Session > 15 messages, large outputs | `context-compression` |
     | Context feels stale or uncertain | `context-optimization` |
     | Writing or improving tests, `/test` | `backend-testing` |
-    | Security review, auth code, secrets | `security-best-practices` |
+    | Security review, auth code, secrets | `api-security-best-practices` |
     | Artifacts (checkpoint/handoff/etc.) | `persistent-memory-rules` |
 
     After loading a skill, briefly note: "📚 Loaded: <skill-name>".

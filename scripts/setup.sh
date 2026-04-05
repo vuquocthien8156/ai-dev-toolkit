@@ -136,8 +136,8 @@ if [ "$ONLY_SKILLS" = true ]; then
   echo "🌐 Step 2.1: Community skills"
   COMMUNITY_SKILLS=(
     "obra/superpowers --skill systematic-debugging"
-    "supercent-io/skills-template --skill backend-testing"
-    "supercent-io/skills-template --skill security-best-practices"
+    "akillness/oh-my-skills --skill backend-testing"
+    "sickn33/antigravity-awesome-skills --skill api-security-best-practices"
   )
   for skill_spec in "${COMMUNITY_SKILLS[@]}"; do
     echo "   Installing: $skill_spec"
