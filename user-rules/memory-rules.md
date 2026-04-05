@@ -43,6 +43,8 @@ V. WORKFLOW ORCHESTRATION
       Examples: `auth-google-signin-plan.md`, `fix-invoice-status-plan.md`, `refactor-discount-service-plan.md`.
 19b. File Map Contract (for non-trivial tasks with 3+ files):
     - MUST create a File Map table before implementation:
+    - ALWAYS use relative paths from project root (e.g., `src/payment/service.ts`).
+      NEVER use absolute paths (e.g., `/Users/.../service.ts`) in plans or File Maps.
       | Category | Files | Notes |
       |----------|-------|-------|
       | **MODIFY** | `path/to/file.ts` | What changes |
@@ -69,6 +71,33 @@ V. WORKFLOW ORCHESTRATION
       - You ask user "does this file export Y?" when you can just open the file → VIOLATION.
       - User approved plan but you notice a missing step mid-review → STILL A GAP. Flag it.
     - This applies to: new plans, resumed plans, and plans approved in previous conversations.
+19d. Artifact Protection (MANDATORY):
+    - NEVER override or overwrite plan/report artifacts without EXPLICIT user permission.
+    - Before overwriting: show diff or summary of what will change, ask: "Confirm overwrite?"
+    - Plan versioning: When a plan evolves across sessions, version it:
+      `refactor-discount-service-plan-v1.md` → `refactor-discount-service-plan-v2.md`
+    - Keep previous versions — NEVER delete old plan versions.
+    - Named Plans: Use descriptive names (already required by Rule 19).
+    - VIOLATION: Overwriting a plan file without asking first.
+    - VIOLATION: Deleting a previous plan version.
+19e. Plan Quality & Persistent Memory (MANDATORY for complex tasks):
+    - Plans are NOT just for organization — they serve as PERSISTENT MEMORY
+      that outlives conversation truncation. Write them as if you will lose
+      all conversation context and only have the plan to continue.
+    - Every plan MUST include:
+      a. Problem Statement: What problem are we solving? (2-3 sentences)
+      b. Analysis: Investigation results, root causes, options considered
+      c. Proposed Changes: File-by-file with specific code snippets or diffs
+      d. Task Checklist: Granular items with clear acceptance criteria
+      e. Verification Steps: Exact commands to verify each change
+    - Plan format MUST be human-readable:
+      - Use tables for comparisons and file maps
+      - Use code blocks for specific changes (with diff format when modifying)
+      - Use mermaid diagrams for flows if applicable
+      - Break long plans into clear sections with headers
+    - VIOLATION: Plan with only bullet points and no code/diff details.
+    - VIOLATION: Plan that cannot be resumed by a different agent/session
+      without reading the original conversation.
 20. Self-Improvement Loop:
     - After ANY correction from the user: capture the lesson
     - Write rules for yourself that prevent the same mistake
@@ -95,9 +124,23 @@ VI. TASK MANAGEMENT
 25. Capture lessons in `docs/<module>/decisions/` (permanent knowledge, committed to git).
 
 VII. CORE PRINCIPLES
-28. Simplicity First: Make every change as simple as possible. Impact minimal code.
-29. No Laziness: Find root causes. No temporary fixes. Senior developer standards.
-30. Minimal Impact & Pause Before Architecture:
+26. Simplicity First: Make every change as simple as possible. Impact minimal code.
+27. No Laziness: Find root causes. No temporary fixes. Senior developer standards.
+28. Root-Cause Priority & Best Practice Approach (MANDATORY for debugging/fixing):
+    - ALWAYS prioritize root-cause solutions. Only suggest workarounds as LAST RESORT.
+    - Every debug/fix plan MUST include these sections in order:
+      a. 🏆 **Best Practice (Recommended)**: The expert-approved, architecturally sound solution.
+         Research and cite industry best practices. Even if complex, present it so user can learn.
+      b. 📚 **Best Practice (Advanced/Reference)**: Solutions that experts use but may not fit
+         current project architecture. Include for LEARNING — briefly explain WHY experts do it,
+         WHEN it applies, and what would need to change to adopt it.
+      c. ⚡ **Pragmatic Solution**: A simpler path that still solves root cause, if (a) is too
+         complex for current scope. Must still be correct, not hacky.
+      d. 🚨 **Workaround/Cheat** (ONLY if no other option): Clearly label as "CHEAT".
+         Explain WHY it's a cheat, WHAT risks it carries, and WHEN to revisit for proper fix.
+    - VIOLATION: Proposing a workaround without first presenting best practice options.
+    - VIOLATION: Skipping the "Advanced/Reference" section without explicit reason.
+31. Minimal Impact & Pause Before Architecture:
     - Changes should only touch what's necessary. Avoid introducing bugs.
     - When answering architecture/design questions, STOP and re-verify your reasoning BEFORE responding.
     - If you change your answer multiple times in a conversation, you are going too fast.
@@ -198,7 +241,7 @@ XIII. CONTEXT-AWARE SKILL LOADING
     | Context feels stale or uncertain | `context-optimization` |
     | Writing or improving tests, `/test` | `backend-testing` |
     | Security review, auth code, secrets | `security-best-practices` |
-    | Context lost after chunk/truncation | `context-management-context-restore` |
+    | Artifacts (checkpoint/handoff/etc.) | `persistent-memory-rules` |
 
     After loading a skill, briefly note: "📚 Loaded: <skill-name>".
 

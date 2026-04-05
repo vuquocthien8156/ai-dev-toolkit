@@ -206,13 +206,12 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
     **Sub-steps:**
 
     a. Parse the detected core tech stack AND major dependencies from `package.json` (e.g. `@sentry/react-native` → sentry, `firebase`, `stripe`, `@reduxjs/toolkit` → redux).
-    b. Look up `ai-dev-toolkit/rules/skill-registry.json` → match `tech_stack_mapping` entries.
+    b. Look up `ai-dev-toolkit/scripts/skill-registry.json` → match `tech_stack_mapping` entries.
     c. Run `npx skills find <keyword>` for BOTH the core tech stack AND each major dependency discovered. If this command fails, report the error and continue with registry-only results.
     d. **PROPOSAL ONLY (STOP & ASK)**: Present the combined list of recommended skills. Ask: "I recommend these skills for your project. Which ones should I include?"
     e. **WAIT FOR EXPLICIT CONFIRMATION** (Rule 2).
     f. Check if `.agent/setup.sh` already exists:
-    - **EXISTS** → Use `replace_file_content` tool to MERGE: only update the `REQUIRED_SKILLS=(...)` array with the confirmed skill list. DO NOT modify ANY other lines in the file.
-    - **DOES NOT EXIST** → Copy `ai-dev-toolkit/scripts/setup-agent-template.sh` to `.agent/setup.sh`, inject confirmed skill names into `__INJECT_REQUIRED_SKILLS__`, and run `chmod +x .agent/setup.sh`.
+    - **DOES NOT EXIST** → Create `.agent/setup.sh` from the toolkit `scripts/setup.sh` (adapted for project use), inject confirmed skill names into a `REQUIRED_SKILLS` array, and run `chmod +x .agent/setup.sh`.
 
 12. Generate Architect & Utilities Documentation (`/scan-modules` logic):
     - **12a. Core Utilities Map**: Use the deep scan buffer from Step 4 to generate `docs/core-utils.md`. Record all available utility functions, helpers, decorators, and constants.

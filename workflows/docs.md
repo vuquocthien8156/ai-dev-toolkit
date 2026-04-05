@@ -14,11 +14,29 @@ Use after feature discussions, business logic decisions, or complex bug fixes.
 - Preserve critical values: numbers, thresholds, file paths, environment scope.
 - If content is mostly noise, write **nothing** rather than weak documentation.
 
-## Steps
+## Process
 
-0. Read `project-context/SKILL.md` to get the base documentation path and module information.
+### 0. Multi-Project Awareness
+Read `.agent/skills/project-context/SKILL.md` (or equivalent) to identify the project's documentation base path. Do NOT assume `docs/modules/` is the only location.
 
-1. Identify which module the knowledge belongs to from the conversation (or ask the user).
+### 0.5 Mode Detection
+Before proceeding, determine the implementation mode based on the user request:
+
+**A. Knowledge Aggregation Mode** (User provides a folder or mentions a broad domain):
+1. Read `CONTEXT.md` in the target module to understand the domain map.
+2. Scan ALL existing files in that domain folder (overviews, decisions, flows).
+3. Find the BEST existing file to append each knowledge point to:
+   - Topic overview/Lifecycle? → `_overview.md` or `domain-lifecycle.md`.
+   - Tactical/One-off decision? → Search `decisions/` for overlapping topics → append.
+   - Architectural guardrail? → Update `CONTEXT.md`.
+4. ONLY create a new file if the topic is genuinely unrelated to all existing files.
+5. Propose the placement strategy to the user before writing.
+
+**B. Single Decision Capture** (Standard conversation flow):
+→ Proceed with the steps below.
+
+### 1. Identify Module and Domain
+Identify which module and domain the decision belongs to. If unsure, ask the user.
 
 2. **Read module context**: If `docs/modules/<module>/CONTEXT.md` exists, read it first to understand existing knowledge and avoid contradictions.
 
@@ -45,7 +63,8 @@ Use after feature discussions, business logic decisions, or complex bug fixes.
    - Could this append to `decision-log.md` (if it's a small tactical choice)?
 
 4d. **Naming guidelines**:
-   - Use descriptive kebab-case: `webhook-idempotency-strategy.md` ✅
+    - Use a kebab-case filename (e.g., `stripe-metadata-clearing.md`).
+    - **CRITICAL**: Before creating, check: Does ANY file in this domain cover an OVERLAPPING topic? If yes, you MUST append to that file instead of creating a new one.
    - Date prefix ONLY for time-sensitive decisions: `2026-03-09-fix-tenant-isolation.md`
    - NO date prefix for permanent architectural docs: `offline-pay-later-architecture.md` ✅
    - Avoid generic names: `fix.md` ❌, `notes.md` ❌

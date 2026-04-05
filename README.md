@@ -28,30 +28,23 @@ Personal toolkit for AI-assisted development. Combines curated skills, workflows
 - Antigravity IDE (primary)
 - Git installed
 
-### Step 1: Clone and make executable
-
+### Step 1: Clone and prepare
 ```bash
 cd ~/Documents
 git clone <your-repo-url> ai-dev-toolkit
-chmod +x ai-dev-toolkit/scripts/setup-antigravity.sh
+chmod +x ai-dev-toolkit/scripts/setup.sh
 ```
 
 ### Step 2: Run setup from inside your project
-
 ```bash
-cd ~/Documents/Zigvy/hr-forte/hr-leave-module
-~/Documents/ai-dev-toolkit/scripts/setup-antigravity.sh
+cd ~/your-project-folder
+~/Documents/ai-dev-toolkit/scripts/setup.sh
 ```
 
 This one command does:
-
-| Step | What happens                                                                | Auto?        |
-| ---- | --------------------------------------------------------------------------- | ------------ |
-| 1    | Writes all rules (Sections I–XIV) to `~/.gemini/GEMINI.md`                  | ✅ Automatic |
-| 2    | Copies self-written skills to `~/.agents/skills/` + symlinks to Antigravity | ✅ Automatic |
-| 2.5  | Installs community skills globally (debugging, testing, security, context)  | ✅ Automatic |
-| 3    | Copies workflows to global + project (**skips existing** unless `--force`)  | ✅ Automatic |
-| 4    | Health check: bloated skills warning + cross-IDE symlinks                   | ✅ Automatic |
+1. Writes global rules to `~/.gemini/GEMINI.md` (Antigravity) and `~/.claude/CLAUDE.md` (Claude Code).
+2. Installs community skills and symlinks them to all supported IDEs.
+3. Copies workflows/commands to both global and project directories.
 
 > **Selective execution**: Use `--rules`, `--skills`, or `--workflows` to run only specific steps.
 > See [Updating](#updating) for details.
@@ -63,22 +56,12 @@ This one command does:
 2. Open Antigravity → **Customizations** → **Workflows** tab
    - You should see: plan, review, debug, verify, docs, test, refactor, spike, pr
 
-### Step 4: (Optional) Cross-IDE config
-
-If you also use Cursor, Claude Code, or Copilot:
-
+### Step 4: (Optional) Targeting specific IDEs
+By default, `setup.sh` configures both Antigravity and Claude Code. To target one:
 ```bash
-# For Cursor — copy .cursorrules to project root
-cp ~/Documents/ai-dev-toolkit/cross-ide/.cursorrules ~/Documents/Zigvy/hr-forte/hr-leave-module/.cursorrules
-
-# For Claude Code — copy CLAUDE.md to project root
-cp ~/Documents/ai-dev-toolkit/cross-ide/CLAUDE.md ~/Documents/Zigvy/hr-forte/hr-leave-module/CLAUDE.md
-
-# For GitHub Copilot / Codex — copy AGENTS.md to project root
-cp ~/Documents/ai-dev-toolkit/cross-ide/AGENTS.md ~/Documents/Zigvy/hr-forte/hr-leave-module/AGENTS.md
+setup.sh --ide antigravity
+setup.sh --ide claude
 ```
-
-> **Note**: Edit these files after copying to add project-specific context (architecture, DB, key patterns).
 
 ---
 
@@ -100,17 +83,16 @@ cp ~/Documents/ai-dev-toolkit/cross-ide/AGENTS.md ~/Documents/Zigvy/hr-forte/hr-
 
 | What                  | How to trigger                  | When to use                                        |
 | --------------------- | ------------------------------- | -------------------------------------------------- |
-| **Plan workflow**     | Type `/plan` in chat            | Starting a new feature or complex task             |
-| **Review workflow**   | Type `/review` in chat          | Before creating a PR                               |
-| **Debug workflow**    | Type `/debug` in chat           | Stuck on a bug                                     |
-| **Verify workflow**   | Type `/verify` in chat          | Before declaring task complete                     |
-| **Test workflow**     | Type `/test` in chat            | Generate or improve tests for modified code        |
-| **Refactor workflow** | Type `/refactor` in chat        | Actionable code quality / architecture improvement |
-| **Spike workflow**    | Type `/spike` in chat           | Technical investigation before committing          |
-| **PR workflow**       | Type `/pr` in chat              | Auto-generate PR description from git changes      |
-| **Docs workflow**     | Type `/docs` in chat            | Auto-document business decisions                   |
-| **Refresh workflow**  | Type `/refresh-context` in chat | Setup AI context, detect tech stack, generate docs |
-| **Setup script**      | Run `setup-antigravity.sh`      | New machine, new project, or after toolkit update  |
+| **Plan workflow**     | `/plan`            | Starting a new feature or complex task   |
+| **Checkpoint**        | `/checkpoint`      | Save task state before session switch    |
+| **Status**            | `/status`          | Report current progress vs plan          |
+| **Resume**            | `/resume`          | Restore context from past sessions       |
+| **Handoff**           | `/handoff`         | Prepare summary for next conversation    |
+| **Debug workflow**    | `/debug`           | Stuck on a bug                           |
+| **Verify workflow**   | `/verify`          | Before declaring task complete           |
+| **Docs workflow**     | `/docs`            | Record business/logic decisions          |
+| **Refresh workflow**  | `/refresh-context` | Auto-detect stack, architecture & skills |
+| **Setup script**      | `setup.sh`         | New project or toolkit update            |
 
 ### 🧠 Semi-Automatic (AI decides based on Skill Trigger Map)
 
@@ -126,7 +108,7 @@ Rule 51 maps specific triggers to skills. The AI prints `📚 Loaded: <skill-nam
 | Session > 15 messages             | `context-compression`                     |
 | Context feels stale               | `context-optimization`                    |
 | Writing tests, `/test`            | `backend-testing`                         |
-| Context lost after truncation     | `context-management-context-restore`      |
+| Context lost after truncation     | `handoff.md` / `checkpoint.md`            |
 
 > **Tip**: If you don't see `📚 Loaded:` in chat, the AI may not be using skills. Ask: "bạn đã dùng skills nào?"
 
@@ -137,34 +119,21 @@ Rule 51 maps specific triggers to skills. The AI prints `📚 Loaded: <skill-nam
 ```
 ai-dev-toolkit/
 │
-├── README.md                          ← This file
-│
-├── skills/                            ← Self-written global skills (→ ~/.agents/skills/)
+├├── skills/                            ← Self-written skills (→ ~/.agents/skills/)
 │   ├── ddd-core-rules/SKILL.md        ← DDD best practices
-│   ├── typescript-mastery/SKILL.md    ← TS patterns, type guards, generics
-│   ├── code-review/SKILL.md           ← 8-section review checklist
-│   ├── git-workflow/SKILL.md          ← Conventional Commits, PR workflow
-│   ├── context-compression/SKILL.md   ← Context window compression strategies
-│   └── context-optimization/SKILL.md  ← Token efficiency patterns
+│   └── ...                            ← TS mastery, code review, git, etc.
 │
-├── workflows/                         ← Global workflows (→ project + ~/.gemini/antigravity/)
-│   ├── plan.md                        ← /plan — structured planning
-│   ├── review.md                      ← /review — code review + security
-│   ├── debug.md                       ← /debug — systematic debugging
-│   ├── verify.md                      ← /verify — verification before done
-│   ├── test.md                        ← /test — generate/improve tests
-│   ├── refactor.md                    ← /refactor — code quality actions
-│   ├── spike.md                       ← /spike — technical investigation
-│   ├── pr.md                          ← /pr — auto PR description
-│   ├── refresh-context.md             ← /refresh-context — context setup
-│   └── docs.md                        ← /docs — auto-documentation
+├── workflows/                         ← Project & Global commands (→ .agent/workflows/ or ~/.claude/commands/)
+│   ├── plan.md, checkpoint.md, status.md, resume.md, handoff.md
+│   └── debug.md, verify.md, docs.md, test.md, refactor.md, pr.md
 │
 ├── user-rules/
-│   └── memory-rules.md                ← All rules (→ ~/.gemini/GEMINI.md)
+│   └── memory-rules.md                ← Tier 1 rules (→ GEMINI.md / CLAUDE.md)
 │
 ├── scripts/
-│   ├── setup-antigravity.sh           ← One-command setup (rules + skills + workflows)
-│   └── setup-agent-template.sh        ← Template for per-project .agent/setup.sh
+│   ├── setup.sh                       ← The multi-IDE installer
+│   └── skill-registry.json            ← Stack-to-skill mapping for /refresh-context
+  └── setup-agent-template.sh        ← Template for per-project .agent/setup.sh
 │
 ├── cross-ide/                         ← Templates for other AI IDEs
 │   ├── CLAUDE.md
@@ -231,18 +200,16 @@ ai-dev-toolkit/
 
 ## Workflows Reference
 
-| Command            | Purpose                                   | When to use                         |
-| ------------------ | ----------------------------------------- | ----------------------------------- |
-| `/plan`            | Create structured plan with checklist     | Starting new feature, 3+ step task  |
-| `/review`          | Systematic code review + security checks  | Before PR, after implementation     |
-| `/debug`           | Step-by-step debugging                    | Stuck on a bug, unexpected behavior |
-| `/verify`          | Evidence-based completion check           | Before declaring task done          |
-| `/test`            | Generate/improve tests for modified code  | After implementation, before PR     |
-| `/refactor`        | Actionable code quality improvements      | Tech debt, architecture cleanup     |
-| `/spike`           | Technical investigation (no prod changes) | Before committing to an approach    |
-| `/pr`              | Auto-generate PR description              | Before creating a PR                |
-| `/docs`            | Auto-document business decisions          | After feature or complex bug fix    |
-| `/refresh-context` | Refresh AI context for the project        | First-time setup, after big changes |
+| Command | Purpose | When to use |
+|---------|---------|-------------|
+| `/plan` | Create plan + checklist | Starting a feature |
+| `/checkpoint` | Save task state | Before session switch |
+| `/status` | Report progress | Context feeling stale |
+| `/resume` | Restore context | New conversation |
+| `/handoff` | Session summary | Ending a session |
+| `/debug` | Systematic debugging | Stuck on a bug |
+| `/verify` | Evidence-based check | Before finishing |
+| `/docs` | Capture logic | Smarter aggregation |
 
 ---
 
@@ -261,23 +228,22 @@ ai-dev-toolkit/
 
 ## Skill Discovery
 
-### Find and install new skills
-
+### Finding Skills
 ```bash
 npx skills find <query>       # Search by keyword
 npx skills add <owner/repo>   # Install from GitHub
 ```
 
-### Curated catalogs
+### Curated Catalogs
+| Catalog | URL |
+|---------|-----|
+| **skills.sh** | [skills.sh](https://skills.sh) |
+| **Antigravity Awesome** | [GitHub](https://github.com/sickn33/antigravity-awesome-skills) |
+| **Awesome Agent Skills** | [GitHub](https://github.com/VoltAgent/awesome-agent-skills) |
+| **Awesome Cursorrules** | [GitHub](https://github.com/PatrickJS/awesome-cursorrules/tree/main/rules) |
 
-| Catalog              | URL                                                                        |
-| -------------------- | -------------------------------------------------------------------------- |
-| skills.sh            | [skills.sh](https://skills.sh)                                             |
-| Antigravity Awesome  | [GitHub](https://github.com/sickn33/antigravity-awesome-skills)            |
-| Awesome Agent Skills | [GitHub](https://github.com/VoltAgent/awesome-agent-skills)                |
-| Awesome Cursorrules  | [GitHub](https://github.com/PatrickJS/awesome-cursorrules/tree/main/rules) |
-
-See [references/skill-discovery.md](references/skill-discovery.md) for detailed guide with evaluation criteria.
+### Strategy: Keep Few, Keep Curated
+> Installing 100+ generic skills dilutes AI attention. Better: 5–10 curated skills with project-specific context.
 
 ---
 
@@ -338,23 +304,11 @@ setup-antigravity.sh --rules --workflows --force
 ## Adding to a New Project
 
 ```bash
-# Full setup (first time)
 cd <your-project>
-~/Documents/ai-dev-toolkit/scripts/setup-antigravity.sh
-
-# Quick workflow sync (after editing a workflow)
-~/Documents/ai-dev-toolkit/scripts/setup-antigravity.sh --workflows --force
+~/Documents/ai-dev-toolkit/scripts/setup.sh
 ```
 
-That's it. The script creates `.agent/workflows/` in the project and installs global skills + rules.
-
-For cross-IDE support, also copy the config templates:
-
-```bash
-cp ~/Documents/ai-dev-toolkit/cross-ide/.cursorrules .
-cp ~/Documents/ai-dev-toolkit/cross-ide/CLAUDE.md .
-cp ~/Documents/ai-dev-toolkit/cross-ide/AGENTS.md .
-```
+That's it. The script creates `.agent/workflows/` or `.claude/commands/` and installs global skills + rules.
 
 ---
 
