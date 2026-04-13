@@ -7,6 +7,8 @@ description: Generate ClickUp tasks from git changes, existing tasks, or convers
 Generate task titles and descriptions, then create them on ClickUp.
 Supports 3 input sources: git changes, existing ClickUp task, or conversation plan.
 
+📚 Load skill: `task-creation` — for title format, description template, quality gate, and anti-patterns.
+
 ---
 
 ## Step 0 — Detect Source
@@ -36,6 +38,7 @@ Then proceed to the matching Step 1 branch.
    Convert to HTTPS format if SSH. Store as `REPO_URL`.
 
 2. Ask user for the diff source. Options:
+
    - **Staged changes**: `git diff --cached`
    - **Branch diff**: `git diff <base>..HEAD` (ask base branch, default: `main`)
    - **Commit range**: `git log --oneline <range>` + `git diff <range>`
@@ -66,7 +69,7 @@ Then proceed to the matching Step 1 branch.
 
 7. **Commits section**: Auto-generate links using `REPO_URL/commit/<full_hash>`.
 
-→ Proceed to **Step 2 — Quality Gate**.
+→ Proceed to **Step 2 — Quality Gate** (defined in `task-creation` skill).
 
 ---
 
@@ -97,11 +100,9 @@ Then proceed to the matching Step 1 branch.
    - Check task comments for additional context or decisions.
 
 5. Propose subtask breakdown:
-   - Each subtask = 1 concrete deliverable
-   - Subtask title format: `{Parent Task Name} — {Subtask Description}`
-   - Subtask titles do NOT include `[Type]` label (inherited from parent).
+   - Follow subtask naming convention from `task-creation` skill.
 
-→ Proceed to **Step 2 — Quality Gate**.
+→ Proceed to **Step 2 — Quality Gate** (defined in `task-creation` skill).
 
 ---
 
@@ -122,76 +123,23 @@ Then proceed to the matching Step 1 branch.
    - Related items serving one feature = 1 task.
    - Classify type: `Feature`, `Bugfix`, `Refactor`, `Chore`.
 
-→ Proceed to **Step 2 — Quality Gate**.
+→ Proceed to **Step 2 — Quality Gate** (defined in `task-creation` skill).
 
 ---
 
-## Step 2 — Quality Gate (ALL PATHS)
+## Step 2 — Quality Gate
 
-Before generating any title or description, self-check for EACH task:
+Run the Quality Gate checklist from the `task-creation` skill.
+ALL checkboxes must pass for ALL tasks before proceeding.
 
-- [ ] **Can I explain WHY this task is needed?** (not just WHAT it does)
-- [ ] **Can I describe the business impact in 1 sentence?** (not technical jargon)
-- [ ] **Do I truly understand the scope?** (not guessing from names)
-- [ ] **Are the key changes/deliverables specific enough?** (someone can act on it without extra context)
-- [ ] **Is the effort ≤ 8 hours?** If estimated > 8h → MUST split into smaller subtasks
-
-### Effort-Based Splitting Rule
-
-- Estimate effort for each task (rough hours of actual dev work).
-- If a task > 8h → it is too large. Propose splitting into subtasks where each ≤ 8h.
-- Present the split suggestion to user: "Task X ước lượng ~12h, recommend tách thành 2 subtasks:"
-- User decides whether to accept the split or keep as-is.
-
-❌ If any checkbox fails → go back to Step 1 and analyze more.
-✅ Only proceed to Step 3 when ALL checkboxes pass for ALL tasks.
+Apply the Effort-Based Splitting Rule: any task > 8h → propose split to user.
 
 ---
 
 ## Step 3 — Generate Task Content
 
-### Title Format
-
-```
-[{Type}] {Concise description of what changed/needed}
-```
-
-Examples:
-
-- `[Feature] Add isSupporter flag to bypass billing`
-- `[Bugfix] Subscription expiration cron NULL detachment`
-- `[Refactor] Centralize proration logic into ProrationCalculator`
-
-### Description Format
-
-```
-{Business context — 1-2 sentences: what problem this solves, why it was needed}
-
-Key changes:
-• {Specific technical change or deliverable}
-• {...}
-
-Risk / Note: (optional — only when there's real risk or important dependency)
-• REQUIRES: {env var, migration, external dependency, etc.}
-• {Breaking change, deployment order, etc.}
-
-Commits: (only for Path A — Git changes)
-• {hash} {REPO_URL}/commit/{full_hash}
-```
-
-### Effort Estimate
-
-Include a rough effort estimate for each task. This will be set as `time_estimate` on ClickUp.
-Format: hours (e.g., `~4h`, `~2h`, `~8h`). Round to nearest hour.
-
-### Description Rules
-
-1. **First line is mandatory** — Business context/why. Write as if explaining to a colleague. No filler.
-2. **Key changes** — Specific and concrete. Avoid repeating the task title. Focus on "what someone needs to know".
-3. **Risk / Note** — Optional section. Only include when there's a real risk. Use `REQUIRES:` prefix for blockers.
-4. **Commits** — Only for Path A. Always include repo links. Auto-generated from `REPO_URL` + commit hash.
-5. **DO NOT include**: file/line stats (+178/-9), generic testing checklists, placeholder content, markdown headers (h1/h2/h3).
-6. **Plain text only** — No markdown headers. Use UPPERCASE labels for sections. Bullet points with `•`.
+Use the title format, description template, and rules from the `task-creation` skill.
+Include effort estimate for each task.
 
 ---
 
@@ -201,10 +149,10 @@ Format: hours (e.g., `~4h`, `~2h`, `~8h`). Round to nearest hour.
 
 1. Present ALL generated tasks in a table:
 
-   | #   | Type    | Title | Effort | Key Changes (summary) |
-   | --- | ------- | ----- | ------ | --------------------- |
-   | 1   | Feature | ...   | ~4h    | ...                   |
-   | 2   | Bugfix  | ...   | ~2h    | ...                   |
+   | # | Type | Title | Effort | Key Changes (summary) |
+   |---|------|-------|--------|------------------------|
+   | 1 | Feature | ... | ~4h | ... |
+   | 2 | Bugfix | ... | ~2h | ... |
 
    ⚠️ Flag any task with effort > 8h and suggest splitting.
 
@@ -218,9 +166,8 @@ Format: hours (e.g., `~4h`, `~2h`, `~8h`). Round to nearest hour.
    - **A) Independent tasks** — Each task is a standalone parent task.
    - **B) Subtasks under a parent** — Create 1 parent task, rest are subtasks.
      - Ask for parent task name (or suggest one).
-     - Subtask title format: `{Parent Task Name} — {Subtask Description}`
-     - Subtask titles do NOT include the `[Type]` label (inherited from parent context).
-   - _(Path B defaults to subtasks under the existing parent task.)_
+     - Follow subtask naming convention from `task-creation` skill.
+   - *(Path B defaults to subtasks under the existing parent task.)*
 
 5. **Ask ClickUp details**:
    - **List**: "Tạo trong list nào trên ClickUp?" — Use `clickup_get_list` to resolve.
@@ -232,8 +179,7 @@ Format: hours (e.g., `~4h`, `~2h`, `~8h`). Round to nearest hour.
      clickup_get_custom_fields(list_id: <resolved_list_id>)
      ```
      Present relevant drop-down/label fields to user and ask which to set.
-     Common examples: Module, Type, Environment — but do NOT hardcode options.
-     Let user pick from the dynamically fetched options.
+     Do NOT hardcode field names or options — always fetch dynamically.
 
 6. **Final confirmation**: "Ready to create {N} tasks. Confirm?"
 
@@ -252,7 +198,6 @@ clickup_resolve_assignees(["me"]) → default_assignee_id
 ### Option A — Independent Tasks
 
 For each task:
-
 ```
 clickup_create_task(
   name: "[{Type}] {title}",
@@ -268,7 +213,6 @@ clickup_create_task(
 ### Option B — Parent + Subtasks
 
 1. Create parent task first (or use existing parent for Path B):
-
    ```
    clickup_create_task(
      name: "[{Type}] {parent_title}",
@@ -307,17 +251,3 @@ Present results:
 |---|---------|-------|-----|
 | 1 | abc123  | ...   | ... |
 ```
-
----
-
-## Anti-Patterns (DO NOT)
-
-- ❌ `Add isSupporter boolean to user entity` — Too vague, repeats title
-- ❌ `Files: 12 | +178 / -9` — Nobody cares about line stats
-- ❌ `DEV TESTING: Set user as supporter → verify excluded` — Generic, obvious
-- ❌ Using ## or ### markdown headers in description — ClickUp renders them too large
-- ❌ Writing description that reads like documentation — Keep it conversational
-- ❌ Creating 1 task per file changed — Group by logical unit of work
-- ❌ Subtask title without parent prefix — Loses context in flat views
-- ❌ Creating tasks without user review — ALWAYS present and get confirmation first
-- ❌ Extracting vague "maybe" items from conversation — Only create tasks for decided items
