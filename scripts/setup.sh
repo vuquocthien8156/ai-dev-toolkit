@@ -1,12 +1,13 @@
 #!/bin/bash
-# setup.sh — Multi-IDE AI Dev Toolkit Setup (Antigravity & Claude Code)
+# setup.sh — Multi-IDE AI Dev Toolkit Setup (Antigravity, Claude Code & Cursor)
 #
 # Usage:
 #   cd <your-project>
 #   ~/Documents/ai-dev-toolkit/scripts/setup.sh
 #
 # What it does:
-#   1. Updates global rules → ~/.gemini/GEMINI.md & ~/.claude/CLAUDE.md
+#   1. Updates global rules → ~/.gemini/GEMINI.md, ~/.claude/CLAUDE.md, ~/.cursor/rules/
+#   1b. Copies reference rules (workflow-protocol, examples) → ~/.agents/rules/
 #   2. Installs global skills → ~/.agents/skills/
 #   2.5 Symlinks skills to target IDEs (Antigravity & Claude Code)
 #   3. Copies workflows/commands → project & global IDE dirs
@@ -14,15 +15,16 @@
 #
 # Flags:
 #   --force       Overwrite existing files
-#   --rules       Only update global rules (Step 1)
+#   --rules       Only update global rules (Step 1 + 1b)
 #   --skills      Only install skills (Steps 2 + 2.5)
 #   --workflows   Only copy workflows (Step 3)
-#   --ide <name>  Target IDE: antigravity, claude, or all (default: all)
+#   --ide <name>  Target IDE: antigravity, claude, cursor, or all (default: all)
 #   --clean       Clean global skills and IDE symlinks (Safe Reset)
 #
 # Examples:
 #   setup.sh                     # Run everything for all IDEs
 #   setup.sh --ide claude        # Only setup Claude Code
+#   setup.sh --ide cursor        # Only setup Cursor
 #   setup.sh --workflows --force # Only update workflows, overwrite
 #   setup.sh --clean             # Reset global skills
 
@@ -79,6 +81,11 @@ CLAUDE_SKILLS="$CLAUDE_BASE/skills"
 CLAUDE_COMMANDS="$CLAUDE_BASE/commands"
 CLAUDE_RULES="$CLAUDE_BASE/CLAUDE.md"
 
+CURSOR_BASE="$HOME/.cursor"
+CURSOR_RULES="$CURSOR_BASE/rules"
+
+AGENTS_RULES_DIR="$HOME/.agents/rules"
+
 PROJECT_AGENT_DIR=".agent"
 PROJECT_CLAUDE_DIR=".claude"
 
@@ -92,10 +99,10 @@ echo ""
 # Step 1: Update Global Rules
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 update_rules() {
-  local src="$TOOLKIT_DIR/user-rules/memory-rules.md"
-  local dest="$1"
-  local name="$2"
-  
+  local src="$1"
+  local dest="$2"
+  local name="$3"
+
   if [ -f "$src" ]; then
     mkdir -p "$(dirname "$dest")"
     if cmp -s "$src" "$dest"; then
@@ -104,13 +111,66 @@ update_rules() {
       cp "$src" "$dest" 2>/dev/null || cat "$src" > "$dest" 2>/dev/null || \
       echo "   ⚠️  Could not update $name (macOS permission). Copy manually."
     fi
+  else
+    echo "   ⚠️  Source not found: $src"
   fi
 }
 
+# Cursor rules need .mdc frontmatter wrapper
+update_rules_cursor() {
+  local src="$1"
+  local dest="$2"
+  local name="$3"
+
+  if [ -f "$src" ]; then
+    mkdir -p "$(dirname "$dest")"
+    local tmp=$(mktemp)
+    cat > "$tmp" <<'FRONTMATTER'
+---
+description: Core behavioral guidelines for AI coding assistant
+alwaysApply: true
+---
+FRONTMATTER
+    cat "$src" >> "$tmp"
+    if cmp -s "$tmp" "$dest"; then
+      echo "   ✅ $name is up-to-date"
+    else
+      cp "$tmp" "$dest" 2>/dev/null || cat "$tmp" > "$dest" 2>/dev/null || \
+      echo "   ⚠️  Could not update $name (macOS permission). Copy manually."
+    fi
+    rm -f "$tmp"
+  else
+    echo "   ⚠️  Source not found: $src"
+  fi
+}
+
+# Copy reference rules (workflow-protocol, examples) to shared location
+copy_reference_rules() {
+  local src_dir="$1"
+  mkdir -p "$AGENTS_RULES_DIR"
+  for ref_file in "workflow-protocol.md" "examples-violations.md"; do
+    if [ -f "$src_dir/$ref_file" ]; then
+      if cmp -s "$src_dir/$ref_file" "$AGENTS_RULES_DIR/$ref_file"; then
+        echo "   ✅ $ref_file is up-to-date"
+      else
+        cp "$src_dir/$ref_file" "$AGENTS_RULES_DIR/$ref_file" 2>/dev/null || true
+        echo "   ✅ $ref_file → $AGENTS_RULES_DIR/"
+      fi
+    fi
+  done
+}
+
+RULES_SRC="$TOOLKIT_DIR/user-rules/memory-rules.md"
+
 if [ "$ONLY_RULES" = true ]; then
-  echo "📝 Step 1: Global rules"
-  [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "antigravity" ]] && update_rules "$ANTIGRAVITY_RULES" "Antigravity rules"
-  [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "claude" ]] && update_rules "$CLAUDE_RULES" "Claude Code rules"
+  echo "📝 Step 1: Global core rules"
+  [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "antigravity" ]] && update_rules "$RULES_SRC" "$ANTIGRAVITY_RULES" "Antigravity rules"
+  [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "claude" ]] && update_rules "$RULES_SRC" "$CLAUDE_RULES" "Claude Code rules"
+  [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "cursor" ]] && update_rules_cursor "$RULES_SRC" "$CURSOR_RULES/user-rules.mdc" "Cursor rules"
+
+  echo ""
+  echo "📝 Step 1b: Reference rules (shared)"
+  copy_reference_rules "$TOOLKIT_DIR/user-rules"
   echo ""
 fi
 
@@ -209,7 +269,17 @@ fi
 # Step 4: Health Check
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 echo "🔍 Step 4: Health check"
-# Common checks...
+
+# Rules check
+[[ -f "$ANTIGRAVITY_RULES" ]] && echo "   ✅ Antigravity rules exist" || echo "   ⚠️  Missing Antigravity rules"
+[[ -f "$CLAUDE_RULES" ]] && echo "   ✅ Claude Code rules exist" || echo "   ⚠️  Missing Claude Code rules"
+[[ -f "$CURSOR_RULES/user-rules.mdc" ]] && echo "   ✅ Cursor rules exist" || echo "   ⚠️  Missing Cursor rules"
+
+# Reference rules check
+[[ -f "$AGENTS_RULES_DIR/workflow-protocol.md" ]] && echo "   ✅ Workflow protocol reference exists" || echo "   ⚠️  Missing workflow-protocol.md"
+[[ -f "$AGENTS_RULES_DIR/examples-violations.md" ]] && echo "   ✅ Examples reference exists" || echo "   ⚠️  Missing examples-violations.md"
+
+# Skills check
 if [ -d "$PROJECT_AGENT_DIR/skills" ]; then
   count=$(find "$PROJECT_AGENT_DIR/skills" -type f | wc -l | tr -d ' ')
   [[ $count -gt 50 ]] && echo "   ⚠️  Too many skill files ($count)" || echo "   ✅ Skills: $count"
