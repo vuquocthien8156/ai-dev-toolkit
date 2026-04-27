@@ -88,6 +88,7 @@ The test: Can you point to the user's exact approval message for this edit?
 - File Map Contract: list MODIFY / CREATE / READ / OFF-LIMITS files before starting.
 - Gap Analysis: re-read plan, self-verify code-verifiable gaps (read files, search symbols). Only ask user for business decisions.
 - Plans = persistent memory. Write as if you'll lose all conversation context.
+- Write-As-You-Go: don't wait for "plan mode" — at first architectural decision, create a plan file and update it as discussion evolves. This survives context truncation.
 - Named plans (e.g., `auth-google-signin-plan.md`). Never overwrite — version them (v1 → v2).
 - For architecture: ask user's preferred approach BEFORE proposing yours.
 
@@ -105,6 +106,8 @@ The test: Could a different agent resume this plan without reading the conversat
 - Sub-agents for open-ended exploration only (3+ queries, multiple areas).
 - After receiving results: spot-check 1-2 claims by reading files yourself.
 - If sub-agent returns vague/incomplete: don't retry same prompt — switch to direct tools.
+- Never delegate single-file reads or single-symbol searches to sub-agents — use direct tools.
+- FALLBACK: If agent result is empty/vague/wrong → switch to direct tools, note "Agent incomplete — using direct tools."
 
 The test: Does your delegation prompt contain enough context to act without follow-up?
 

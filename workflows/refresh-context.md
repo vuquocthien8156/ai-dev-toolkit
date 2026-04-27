@@ -1,5 +1,5 @@
 ---
-description: Comprehensive project context refresh. Scans project, detects architecture, common code, generates SKILL.md and module docs.
+description: Comprehensive project context refresh. Scans project, detects architecture, generates SKILL.md. Also restructures oversized context files (formerly /refactor-context).
 ---
 
 // turbo-all
@@ -234,6 +234,19 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
     - Topic-Skill mapping generated
     - Interactive Skill Setup completed
     - Files created/updated
+
+## Context Restructuring (formerly /refactor-context)
+
+Use when SKILL.md or CONTEXT.md exceeds 200 lines after generation.
+
+1. **Measure**: Count total lines. If ≤200 → no action needed.
+2. **Analyze sections**: List all `##` sections with line counts in a table.
+3. **Propose partition plan**: Group sections by topic, show which sections go to which partition file with estimated line counts. Ask user to approve.
+4. **Execute split** (after confirmation):
+   - Create partition files with extracted content
+   - Rewrite hub to ≤150 lines (overview + routing table pointing to partitions)
+5. **Verify no knowledge lost**: Compare total content — hub + partitions ≥ original. Report: "All N sections preserved across M files."
+6. **Update references**: Fix any cross-references to the original file.
 
 ## Staleness Check (for other workflows)
 
