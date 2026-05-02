@@ -1,6 +1,6 @@
 # AI Dev Toolkit
 
-Personal toolkit for AI-assisted development. Combines curated skills, workflows, and rules for **Antigravity**, **Cursor**, **Claude Code**, and **GitHub Copilot**.
+Personal toolkit for AI-assisted development. Combines curated skills, workflows, and rules for **Antigravity**, **Cursor**, **Claude Code**, **Windsurf**, and **GitHub Copilot**.
 
 ---
 
@@ -29,6 +29,7 @@ Personal toolkit for AI-assisted development. Combines curated skills, workflows
 - Git installed
 
 ### Step 1: Clone and prepare
+
 ```bash
 cd ~/Documents
 git clone <your-repo-url> ai-dev-toolkit
@@ -36,12 +37,14 @@ chmod +x ai-dev-toolkit/scripts/setup.sh
 ```
 
 ### Step 2: Run setup from inside your project
+
 ```bash
 cd ~/your-project-folder
 ~/Documents/ai-dev-toolkit/scripts/setup.sh
 ```
 
 This one command does:
+
 1. Writes global rules to `~/.gemini/GEMINI.md` (Antigravity) and `~/.claude/CLAUDE.md` (Claude Code).
 2. Installs community skills and symlinks them to all supported IDEs.
 3. Copies workflows/commands to both global and project directories.
@@ -57,10 +60,14 @@ This one command does:
    - You should see: plan, review, debug, verify, docs, test, refactor, spike, pr
 
 ### Step 4: (Optional) Targeting specific IDEs
-By default, `setup.sh` configures both Antigravity and Claude Code. To target one:
+
+By default, `setup.sh` configures all supported IDEs. To target one:
+
 ```bash
 setup.sh --ide antigravity
 setup.sh --ide claude
+setup.sh --ide cursor
+setup.sh --ide windsurf
 ```
 
 ---
@@ -81,18 +88,18 @@ setup.sh --ide claude
 
 ### 🔧 Manual (You trigger these)
 
-| What                  | How to trigger                  | When to use                                        |
-| --------------------- | ------------------------------- | -------------------------------------------------- |
-| **Plan workflow**     | `/plan`            | Starting a new feature or complex task   |
-| **Checkpoint**        | `/checkpoint`      | Save task state before session switch    |
-| **Status**            | `/status`          | Report current progress vs plan          |
-| **Resume**            | `/resume`          | Restore context from past sessions       |
-| **Handoff**           | `/handoff`         | Prepare summary for next conversation    |
-| **Debug workflow**    | `/debug`           | Stuck on a bug                           |
-| **Verify workflow**   | `/verify`          | Before declaring task complete           |
-| **Docs workflow**     | `/docs`            | Record business/logic decisions          |
-| **Refresh workflow**  | `/refresh-context` | Auto-detect stack, architecture & skills |
-| **Setup script**      | `setup.sh`         | New project or toolkit update            |
+| What                 | How to trigger     | When to use                              |
+| -------------------- | ------------------ | ---------------------------------------- |
+| **Plan workflow**    | `/plan`            | Starting a new feature or complex task   |
+| **Checkpoint**       | `/checkpoint`      | Save task state before session switch    |
+| **Status**           | `/status`          | Report current progress vs plan          |
+| **Resume**           | `/resume`          | Restore context from past sessions       |
+| **Handoff**          | `/handoff`         | Prepare summary for next conversation    |
+| **Debug workflow**   | `/debug`           | Stuck on a bug                           |
+| **Verify workflow**  | `/verify`          | Before declaring task complete           |
+| **Docs workflow**    | `/docs`            | Record business/logic decisions          |
+| **Refresh workflow** | `/refresh-context` | Auto-detect stack, architecture & skills |
+| **Setup script**     | `setup.sh`         | New project or toolkit update            |
 
 ### 🧠 Semi-Automatic (AI decides based on Skill Trigger Map)
 
@@ -117,9 +124,11 @@ Rule 51 maps specific triggers to skills. The AI prints `📚 Loaded: <skill-nam
 ## Repository Structure
 
 # Run to update/reinstall:
+
 npx github:vuquocthien8156/ai-dev-toolkit --force
 
 # OR for a clean system reset (if skills feel broken/bloated):
+
 npx github:vuquocthien8156/ai-dev-toolkit --clean
 
 ```
@@ -200,27 +209,28 @@ ai-dev-toolkit/
 
 ## Workflows Reference
 
-| Command | Purpose | When to use |
-|---------|---------|-------------|
-| `/plan` | Create plan + checklist | Starting a feature |
-| `/checkpoint` | Save task state | Before session switch |
-| `/status` | Report progress | Context feeling stale |
-| `/resume` | Restore context | New conversation |
-| `/handoff` | Session summary | Ending a session |
-| `/debug` | Systematic debugging | Stuck on a bug |
-| `/verify` | Evidence-based check | Before finishing |
-| `/docs` | Capture logic | Smarter aggregation |
+| Command       | Purpose                 | When to use           |
+| ------------- | ----------------------- | --------------------- |
+| `/plan`       | Create plan + checklist | Starting a feature    |
+| `/checkpoint` | Save task state         | Before session switch |
+| `/status`     | Report progress         | Context feeling stale |
+| `/resume`     | Restore context         | New conversation      |
+| `/handoff`    | Session summary         | Ending a session      |
+| `/debug`      | Systematic debugging    | Stuck on a bug        |
+| `/verify`     | Evidence-based check    | Before finishing      |
+| `/docs`       | Capture logic           | Smarter aggregation   |
 
 ---
 
 ## Cross-IDE Support
 
-| IDE                | Config file                    | How AI reads it                      | Template location         |
-| ------------------ | ------------------------------ | ------------------------------------ | ------------------------- |
-| **Antigravity**    | `GEMINI.md` + `.agent/skills/` | Auto (rules always, skills by match) | Setup script handles this |
-| **Cursor**         | `.cursorrules` in project root | Auto reads on project open           | `cross-ide/.cursorrules`  |
-| **Claude Code**    | `CLAUDE.md` in project root    | Auto reads on project open           | `cross-ide/CLAUDE.md`     |
-| **GitHub Copilot** | `AGENTS.md` in project root    | Auto reads for agent mode            | `cross-ide/AGENTS.md`     |
+| IDE                | Config file                               | How AI reads it                      | Template location         |
+| ------------------ | ----------------------------------------- | ------------------------------------ | ------------------------- |
+| **Antigravity**    | `GEMINI.md` + `.agent/skills/`            | Auto (rules always, skills by match) | Setup script handles this |
+| **Cursor**         | `.cursorrules` in project root            | Auto reads on project open           | `cross-ide/.cursorrules`  |
+| **Claude Code**    | `CLAUDE.md` in project root               | Auto reads on project open           | `cross-ide/CLAUDE.md`     |
+| **Windsurf**       | `.windsurfrules` + `.windsurf/workflows/` | Auto reads on project open           | Setup script handles this |
+| **GitHub Copilot** | `AGENTS.md` in project root               | Auto reads for agent mode            | `cross-ide/AGENTS.md`     |
 
 > **Important**: After copying cross-IDE templates, edit them to add project-specific details (architecture, database, key patterns). The templates contain generic TypeScript rules only.
 
@@ -229,20 +239,23 @@ ai-dev-toolkit/
 ## Skill Discovery
 
 ### Finding Skills
+
 ```bash
 npx skills find <query>       # Search by keyword
 npx skills add <owner/repo>   # Install from GitHub
 ```
 
 ### Curated Catalogs
-| Catalog | URL |
-|---------|-----|
-| **skills.sh** | [skills.sh](https://skills.sh) |
-| **Antigravity Awesome** | [GitHub](https://github.com/sickn33/antigravity-awesome-skills) |
-| **Awesome Agent Skills** | [GitHub](https://github.com/VoltAgent/awesome-agent-skills) |
-| **Awesome Cursorrules** | [GitHub](https://github.com/PatrickJS/awesome-cursorrules/tree/main/rules) |
+
+| Catalog                  | URL                                                                        |
+| ------------------------ | -------------------------------------------------------------------------- |
+| **skills.sh**            | [skills.sh](https://skills.sh)                                             |
+| **Antigravity Awesome**  | [GitHub](https://github.com/sickn33/antigravity-awesome-skills)            |
+| **Awesome Agent Skills** | [GitHub](https://github.com/VoltAgent/awesome-agent-skills)                |
+| **Awesome Cursorrules**  | [GitHub](https://github.com/PatrickJS/awesome-cursorrules/tree/main/rules) |
 
 ### Strategy: Keep Few, Keep Curated
+
 > Installing 100+ generic skills dilutes AI attention. Better: 5–10 curated skills with project-specific context.
 
 ---
@@ -308,7 +321,7 @@ cd <your-project>
 ~/Documents/ai-dev-toolkit/scripts/setup.sh
 ```
 
-That's it. The script creates `.agent/workflows/` or `.claude/commands/` and installs global skills + rules.
+That's it. The script creates `.agent/workflows/`, `.claude/commands/`, `.windsurf/workflows/` and installs global skills + rules.
 
 ---
 

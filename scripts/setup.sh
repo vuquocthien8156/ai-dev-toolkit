@@ -1,12 +1,12 @@
 #!/bin/bash
-# setup.sh — Multi-IDE AI Dev Toolkit Setup (Antigravity, Claude Code & Cursor)
+# setup.sh — Multi-IDE AI Dev Toolkit Setup (Antigravity, Claude Code, Cursor & Windsurf)
 #
 # Usage:
 #   cd <your-project>
 #   ~/Documents/ai-dev-toolkit/scripts/setup.sh
 #
 # What it does:
-#   1. Updates global rules → ~/.gemini/GEMINI.md, ~/.claude/CLAUDE.md, ~/.cursor/rules/
+#   1. Updates global rules → ~/.gemini/GEMINI.md, ~/.claude/CLAUDE.md, ~/.cursor/rules/, ~/.windsurfrules
 #   1b. Copies reference rules (workflow-protocol, examples) → ~/.agents/rules/
 #   2. Installs global skills → ~/.agents/skills/
 #   2.5 Symlinks skills to target IDEs (Antigravity & Claude Code)
@@ -18,13 +18,14 @@
 #   --rules       Only update global rules (Step 1 + 1b)
 #   --skills      Only install skills (Steps 2 + 2.5)
 #   --workflows   Only copy workflows (Step 3)
-#   --ide <name>  Target IDE: antigravity, claude, cursor, or all (default: all)
+#   --ide <name>  Target IDE: antigravity, claude, cursor, windsurf, or all (default: all)
 #   --clean       Clean global skills and IDE symlinks (Safe Reset)
 #
 # Examples:
 #   setup.sh                     # Run everything for all IDEs
 #   setup.sh --ide claude        # Only setup Claude Code
 #   setup.sh --ide cursor        # Only setup Cursor
+#   setup.sh --ide windsurf      # Only setup Windsurf
 #   setup.sh --workflows --force # Only update workflows, overwrite
 #   setup.sh --clean             # Reset global skills
 
@@ -83,6 +84,11 @@ CLAUDE_RULES="$CLAUDE_BASE/CLAUDE.md"
 
 CURSOR_BASE="$HOME/.cursor"
 CURSOR_RULES="$CURSOR_BASE/rules"
+
+WINDSURF_RULES_GLOBAL="$HOME/.windsurfrules"
+WINDSURF_WORKFLOWS="$HOME/.windsurf/workflows"
+WINDSURF_SKILLS="$HOME/.windsurf/skills"
+PROJECT_WINDSURF_DIR=".windsurf"
 
 AGENTS_RULES_DIR="$HOME/.agents/rules"
 
@@ -167,6 +173,7 @@ if [ "$ONLY_RULES" = true ]; then
   [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "antigravity" ]] && update_rules "$RULES_SRC" "$ANTIGRAVITY_RULES" "Antigravity rules"
   [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "claude" ]] && update_rules "$RULES_SRC" "$CLAUDE_RULES" "Claude Code rules"
   [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "cursor" ]] && update_rules_cursor "$RULES_SRC" "$CURSOR_RULES/user-rules.mdc" "Cursor rules"
+  [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "windsurf" ]] && update_rules "$RULES_SRC" "$WINDSURF_RULES_GLOBAL" "Windsurf rules"
 
   echo ""
   echo "📝 Step 1b: Reference rules (shared)"
@@ -220,6 +227,7 @@ if [ "$ONLY_SKILLS" = true ]; then
 
   [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "antigravity" ]] && link_skills "$ANTIGRAVITY_SKILLS" "Antigravity"
   [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "claude" ]] && link_skills "$CLAUDE_SKILLS" "Claude Code"
+  [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "windsurf" ]] && link_skills "$WINDSURF_SKILLS" "Windsurf"
   echo ""
 fi
 
@@ -262,6 +270,16 @@ if [ "$ONLY_WORKFLOWS" = true ]; then
       copy_wf "$PROJECT_CLAUDE_DIR/commands"
     fi
   fi
+
+  # Windsurf (workflows)
+  if [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "windsurf" ]]; then
+    echo "   🌍 Windsurf Global → $WINDSURF_WORKFLOWS"
+    copy_wf "$WINDSURF_WORKFLOWS"
+    if [ -d ".git" ] || [ -d "$PROJECT_WINDSURF_DIR" ]; then
+      echo "   📁 Windsurf Project → $PROJECT_WINDSURF_DIR/workflows"
+      copy_wf "$PROJECT_WINDSURF_DIR/workflows"
+    fi
+  fi
   echo ""
 fi
 
@@ -274,6 +292,7 @@ echo "🔍 Step 4: Health check"
 [[ -f "$ANTIGRAVITY_RULES" ]] && echo "   ✅ Antigravity rules exist" || echo "   ⚠️  Missing Antigravity rules"
 [[ -f "$CLAUDE_RULES" ]] && echo "   ✅ Claude Code rules exist" || echo "   ⚠️  Missing Claude Code rules"
 [[ -f "$CURSOR_RULES/user-rules.mdc" ]] && echo "   ✅ Cursor rules exist" || echo "   ⚠️  Missing Cursor rules"
+[[ -f "$WINDSURF_RULES_GLOBAL" ]] && echo "   ✅ Windsurf rules exist" || echo "   ⚠️  Missing Windsurf rules"
 
 # Reference rules check
 [[ -f "$AGENTS_RULES_DIR/workflow-protocol.md" ]] && echo "   ✅ Workflow protocol reference exists" || echo "   ⚠️  Missing workflow-protocol.md"
