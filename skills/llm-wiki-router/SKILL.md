@@ -22,16 +22,31 @@ Do not lose valuable context. Extract architectural decisions, bug fix patterns,
 | --------------------------------------- | ---------------------------------------- | ------------------------------ |
 | Business rules & domain logic           | `docs/modules/<module>/domains/`         | Entity Pages (`subscription.md`) |
 | Cross-cutting use cases                 | `docs/modules/<module>/use-cases/`       | Concept Pages (`tenant.md`)      |
-| Execution flows (sequence & call chains)| `docs/modules/<module>/domains/<domain>/flows/` | `<feature>.flow.md`       |
+| Execution flows (HOW code runs)         | `docs/modules/<module>/domains/<domain>/flows/` | `<feature>.flow.md`       |
+| Architectural decisions (WHY/Trade-offs)| `docs/modules/<module>/domains/<domain>/decisions/` | `<topic>.md`            |
+| Test scenarios & verification           | `docs/modules/<module>/domains/<domain>/test-cases/` | `<scenario>.md`        |
 | Coding patterns & conventions           | `.agents/skills/project-context/SKILL.md` | Append to relevant section     |
 | Repeatable agent workflows              | `.agents/workflows/`                      | `command-name.md`              |
 | Wiki Index                              | `docs/index.md`                          | Markdown list of links         |
 | Change Log                              | `docs/log.md`                            | Append-only timestamped list   |
 
-## Entity Merge Rule
+## Merge vs Split Strategy
 
-Before creating a new file, ALWAYS read `docs/index.md`. 
-If an Entity Page exists for the topic (e.g., `invoice.md`), APPEND the new knowledge as a section. Only create new files for entirely new concepts. Do NOT create monolithic files.
+Before taking action, evaluate whether to append to an existing file or create a new one:
+
+### 1. Merge (Append)
+**Triggers:**
+- Knowledge belongs to a single Entity (Internal logic).
+- Explains attributes, states, or simple data rules.
+- New content is small (< 15 lines).
+- File size after merging remains < 200 lines.
+
+### 2. Split (Create New)
+**Triggers:**
+- Logic spans > 2 Entities (Cross-cutting).
+- Requires a complex Mermaid diagram (> 15 nodes).
+- Is a standalone process, runbook, or verification checklist.
+- Merging would cause the file to exceed **200 lines**.
 
 ## Trigger
 
