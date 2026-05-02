@@ -31,7 +31,7 @@ Ask the user (or infer from context) which mode to run:
 #### Mode A: Update (Default)
 Record knowledge from the current conversation into the wiki.
 
-1. **Identify Target Domain** — Determine which module the knowledge belongs to (e.g., `docs/modules/payment/`). Read the module's local `index.md`.
+1. **Identify Target Domain** — Determine which module the knowledge belongs to (e.g., `docs/modules/payment/`). Read the module's local `index.md`. **If the domain/folder does not exist, initialize it using the boilerplate from `.agents/templates/domain-boilerplate/`.**
 2. **Entity Page Resolution** — Find the most relevant Entity Page. If it exists, APPEND. Only CREATE a new page if the concept is entirely new.
 3. **Cross-Reference Check** — Does this change affect other entities? If yes, update those pages with a brief note and link.
 4. **Frontmatter Check** — Ensure every touched file has valid YAML frontmatter (`tags`, `date_updated`).

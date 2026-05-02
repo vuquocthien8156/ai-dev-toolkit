@@ -44,7 +44,7 @@ The log is an append-only timeline of the wiki's evolution.
 - This ensures the log is easily parsed by `grep`.
 
 ### C. Standardized Domain Layout
-Mọi Domain folder nên tuân thủ cấu trúc phân lớp sau:
+Mọi Domain folder nên tuân thủ cấu trúc phân lớp sau (Sử dụng boilerplate mẫu tại `.agents/templates/domain-boilerplate/` khi tạo mới):
 ```text
 domains/<domain-name>/
 ├── index.md           # Entry point & Domain context

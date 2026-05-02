@@ -91,6 +91,7 @@ WINDSURF_SKILLS="$HOME/.windsurf/skills"
 PROJECT_WINDSURF_DIR=".windsurf"
 
 AGENTS_RULES_DIR="$HOME/.agents/rules"
+AGENTS_TEMPLATES_DIR="$HOME/.agents/templates"
 
 PROJECT_AGENT_DIR=".agents"
 PROJECT_CLAUDE_DIR=".claude"
@@ -166,6 +167,24 @@ copy_reference_rules() {
   done
 }
 
+# Copy templates to shared location
+copy_templates() {
+  local src_dir="$1"
+  mkdir -p "$AGENTS_TEMPLATES_DIR"
+  if [ -d "$src_dir" ]; then
+    cp -r "$src_dir"/* "$AGENTS_TEMPLATES_DIR/" 2>/dev/null || true
+    echo "   ✅ Templates → $AGENTS_TEMPLATES_DIR/"
+    
+    # Copy to project for team sharing
+    if [ -d ".git" ] || [ -d "$PROJECT_AGENT_DIR" ]; then
+      local proj_temp="$PROJECT_AGENT_DIR/templates"
+      mkdir -p "$proj_temp"
+      cp -r "$src_dir"/* "$proj_temp/" 2>/dev/null || true
+      echo "   ✅ Templates → $proj_temp/ (project)"
+    fi
+  fi
+}
+
 RULES_SRC="$TOOLKIT_DIR/user-rules/memory-rules.md"
 
 if [ "$ONLY_RULES" = true ]; then
@@ -178,6 +197,10 @@ if [ "$ONLY_RULES" = true ]; then
   echo ""
   echo "📝 Step 1b: Reference rules (shared)"
   copy_reference_rules "$TOOLKIT_DIR/user-rules"
+  echo ""
+
+  echo "📝 Step 1c: Templates (shared)"
+  copy_templates "$TOOLKIT_DIR/templates"
   echo ""
 fi
 
@@ -336,6 +359,9 @@ echo "🔍 Step 4: Health check"
 # Reference rules check
 [[ -f "$AGENTS_RULES_DIR/workflow-protocol.md" ]] && echo "   ✅ Workflow protocol reference exists" || echo "   ⚠️  Missing workflow-protocol.md"
 [[ -f "$AGENTS_RULES_DIR/examples-violations.md" ]] && echo "   ✅ Examples reference exists" || echo "   ⚠️  Missing examples-violations.md"
+
+# Templates check
+[[ -d "$AGENTS_TEMPLATES_DIR/domain-boilerplate" ]] && echo "   ✅ Domain boilerplate template exists" || echo "   ⚠️  Missing domain boilerplate"
 
 # Skills check
 if [ -d "$PROJECT_AGENT_DIR/skills" ]; then
