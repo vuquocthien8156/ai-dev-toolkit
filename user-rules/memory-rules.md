@@ -90,6 +90,7 @@ The test: Can you point to the user's exact approval message for this edit?
 - Plans = persistent memory. Write as if you'll lose all conversation context.
 - Write-As-You-Go: don't wait for "plan mode" — at first architectural decision, create a plan file and update it as discussion evolves. This survives context truncation.
 - Named plans (e.g., `auth-google-signin-plan.md`). Never overwrite — version them (v1 → v2).
+- **PLAN PROTECTION:** Never blindly OVERWRITE an implementation plan using file tools. Always consider if you can APPEND or MODIFY specific sections instead. If you absolutely must overwrite the entire file, you MUST explicitly ask for the user's permission first.
 - For architecture: ask user's preferred approach BEFORE proposing yours.
 
 The test: Could a different agent resume this plan without reading the conversation?
@@ -120,7 +121,25 @@ The test: Does your delegation prompt contain enough context to act without foll
 - Every response starts with Conceptual Report before any code.
 - Use "---" to separate sections. Code at the end, only after user confirmation.
 
+### 9. Knowledge is a Living Wiki
+
+**Do not let context die in the chat window. Store it in the Wiki.**
+
+- Whenever a feature is completed, a bug is fixed, or an architectural decision is made, PROPOSE updating the project's LLM Wiki.
+- Always maintain an `index.md` and interlink concept pages. 
+- Never write monolithic doc files.
+- Command the user to run `/docs` to initiate the documentation workflow.
+
+### 10. Bug & Rule Evolution
+
+**Share systemic lessons with the team.**
+
+- When fixing a global, critical, or repeatable project bug, DO NOT just fix the code and move on.
+- Proactively ask the user: *"Should we update the project's rules or create a new Skill so other team members don't make the same mistake?"*
+- Propose creating a new skill (e.g., using `skill-creator`) if the pattern is complex and reusable.
+
 ---
+
 
 **Working indicators:** Fewer unnecessary changes in diffs, fewer rewrites, clarifying questions come before implementation, sub-agents return actionable results on first attempt.
 

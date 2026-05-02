@@ -17,7 +17,7 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
 | `<!-- PRESERVED -->` / Human Notes | Never touch. Skip entirely                                                                                     |
 | Sections without marker            | Show diff, ask user — could be human-added knowledge                                                           |
 | New sections from scan             | Append at end of file, mark `<!-- AUTO-GENERATED -->`                                                          |
-| `.agent/setup.sh`                  | **MERGE ONLY**: only add/remove entries in `REQUIRED_SKILLS=(...)` array. NEVER overwrite or regenerate file   |
+| `.agents/setup.sh`                  | **MERGE ONLY**: only add/remove entries in `REQUIRED_SKILLS=(...)` array. NEVER overwrite or regenerate file   |
 
 ## Steps
 
@@ -67,7 +67,7 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
    - Entity naming vs DB table naming → flag potential mismatches
    - Circular dependency risks between modules
 
-8. Generate / Update `.agent/skills/project-context/SKILL.md` using buffer:
+8. Generate / Update `.agents/skills/project-context/SKILL.md` using buffer:
    - **Show DIFF to user before writing** (compare buffer vs existing)
    - Ask user: "Apply these changes? [Y / n / selective]"
    - Only write after explicit confirmation
@@ -80,6 +80,7 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
    ## Auto-Generated Documentation
    - Core Utilities Map: `docs/core-utils.md` -> ALWAYS review this before writing new utility functions or helpers to reuse existing logic.
    - Modules Index: `docs/INDEX.md` -> Check this for architecture of specific modules.
+   - Module Context Router: If the user mentions a specific module (e.g., `payment`, `auth`), ALWAYS read `docs/modules/<module-name>/README.md` and check `docs/modules/<module-name>/domains/` before coding.
    ## Tech Stack
    ## Module Classification
    ## Shared/Common Code (Key utils/services)
@@ -87,6 +88,9 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
    ## Conventions (Naming, Testing, Git)
    ## Proactive Quality Checks
    ## Key Entry Points
+   ## Team Rules & Bug Evolution <!-- PRESERVED -->
+   - **Bug Evolution**: When fixing a global, critical, or repeatable project bug, DO NOT just fix the code. Ask the user if we should update this SKILL.md file or create a new skill to ensure other team members don't repeat the same mistake.
+   - **Wiki Reminder**: After completing complex tasks or architectural decisions, remind the user to run `/docs` to update the LLM Wiki.
    ## Workflow Hints <!-- PRESERVED -->
    <!-- Project-specific guidance for global workflows. Agent reads these automatically. -->
    | Workflow | Hints |
@@ -135,20 +139,25 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
    - Categories are domain-driven (NOT a fixed template) — agent proposes, user decides
    - Hub keeps: Core concepts, ERD, key abstractions, routing table to partitions
 
-9. Generate `.agent/skills/knowledge-router/SKILL.md` using this template:
+9. **Create Cross-IDE Pointers:**
+   To ensure all IDEs know to read `.agents/skills/project-context/SKILL.md`, automatically execute these terminal commands to create pointers:
+   - **Cursor:** Create `.cursor/rules/00-project-context.mdc` (create `.cursor/rules` if needed) instructing Cursor to read `.agents/skills/project-context/SKILL.md` for architecture and conventions.
+   - **Claude Code:** Ensure `CLAUDE.md` exists at project root and append a line instructing it to read `.agents/skills/project-context/SKILL.md` (only if the instruction isn't already there).
+   - **Windsurf:** Ensure `.windsurfrules` exists at project root and append a line instructing it to read `.agents/skills/project-context/SKILL.md` (only if the instruction isn't already there).
+
+10. Generate `.agents/skills/llm-wiki-router/SKILL.md` using this template:
 
    ```markdown
    ---
-   name: knowledge-router
-   description: Rules for classifying and saving knowledge into project docs.
+   name: llm-wiki-router
+   description: Rules for maintaining the project's LLM Wiki. Use this to route knowledge properly.
    ---
 
-   # Knowledge Router
+   # LLM Wiki Router
 
    ## Core Principle
 
-   Do not lose valuable context. If we discover a complex bug, architecture decision,
-   or project-specific pattern, it MUST be extracted and saved.
+   Do not lose valuable context. Extract architectural decisions, bug fix patterns, and domain knowledge into the project's LLM Wiki using the `/docs` workflow.
 
    ## Quality Rules (Essence Distillation)
 
@@ -156,62 +165,51 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
    - Format: [Context] → [Decision/Rule] → [Condition/Scope] in 1-2 sentences.
    - Each entry must be SELF-CONTAINED (readable without conversation history).
    - Preserve critical: numbers, thresholds, file paths, environment scope.
-   - If content is mostly noise, save nothing rather than weak knowledge.
 
-   ## Invalidation Rules
-
-   Before writing NEW knowledge, ALWAYS check existing docs for contradictions:
-
-   - Completed phases still marked "in progress" → UPDATE or REMOVE
-   - Decisions reversed in later conversations → REMOVE stale entry
-   - Rules that conflict with current codebase → UPDATE
-     Priority: Remove stale → Update changed → Add new.
-
-   ## Where to Save What
+   ## Where to Save What (Wiki Pattern)
 
    | Type                                    | Location                                 | Format                         |
    | --------------------------------------- | ---------------------------------------- | ------------------------------ |
-   | Business rules & architecture decisions | `docs/<module>/decisions/`               | `NNN-short-name.md`            |
-   | Module living knowledge & architecture  | `docs/modules/<module>/CONTEXT.md`       | Single file per module         |
-   | Coding patterns & conventions           | `.agent/skills/project-context/SKILL.md` | Append to relevant section     |
-   | Repeatable agent workflows              | `.agent/workflows/`                      | `command-name.md`              |
-   | Lessons learned from corrections        | `docs/<module>/decisions/`               | Append to existing or new file |
+   | Business rules & domain logic           | `docs/modules/<module>/domains/`         | Entity Pages (`subscription.md`) |
+   | Cross-cutting use cases                 | `docs/modules/<module>/use-cases/`       | Concept Pages (`tenant.md`)      |
+   | Coding patterns & conventions           | `.agents/skills/project-context/SKILL.md` | Append to relevant section     |
+   | Repeatable agent workflows              | `.agents/workflows/`                      | `command-name.md`              |
+   | Wiki Index                              | `docs/index.md`                          | Markdown list of links         |
+   | Change Log                              | `docs/log.md`                            | Append-only timestamped list   |
 
-   ## Decision Merge Rule
+   ## Entity Merge Rule
 
-   Before creating a new decision file, search existing `decisions/` for the SAME TOPIC.
-   If found → APPEND a dated section (`## Update YYYY-MM-DD`). Only create new files for unrelated topics.
+   Before creating a new file, ALWAYS read `docs/index.md`. 
+   If an Entity Page exists for the topic (e.g., `invoice.md`), APPEND the new knowledge as a section. Only create new files for entirely new concepts. Do NOT create monolithic files.
 
    ## Trigger
 
    At the end of a successful task, before declaring "DONE", evaluate:
    "Did we establish a new pattern or figure out something complex?"
-   If Yes → Draft knowledge to the appropriate location. Ask for confirmation.
+   If Yes → Propose running the `/docs` workflow to update the LLM Wiki.
    ```
 
 10. **[NEW]** Generate Topic-Skill Mapping table:
-    - Scan `.agent/skills/` directory
+    - Scan `.agents/skills/` directory
     - Extract `name` and `description` from all `SKILL.md` files
     - Guess module association based on skill name (e.g. `stripe` → `payment` module)
     - Ask user to review/adjust the auto-generated mapping table before saving to `project-context/SKILL.md`
 
-11. **[NEW]** Generate / Update `.agent/setup.sh` (Interactive Skill Setup):
+11. **[NEW]** Interactive Skill Setup (Directly in Workflow):
 
-    > **🚨 ABSOLUTE RULE: NEVER OVERWRITE `.agent/setup.sh`. MERGE ONLY.**
-    > The setup.sh file contains project-specific logic (IDE symlinks, Git tracking, scaffolding) that took significant effort to create.
-    > You are ONLY allowed to ADD or REMOVE entries in the `REQUIRED_SKILLS=(...)` array.
-    > If you cannot find a `REQUIRED_SKILLS` array in the file, DO NOT TOUCH THE FILE. Ask user for guidance.
-    > If `npx skills` fails, report the error and STOP. Do NOT generate any fallback script.
+    > **🚨 ABSOLUTE RULE: DO NOT GENERATE a setup.sh script for the project.**
+    > Since all skills are meant to be committed to Git to provide a zero-config experience for the team, this workflow handles skill installation and isolation directly.
 
     **Sub-steps:**
 
     a. Parse the detected core tech stack AND major dependencies from `package.json` (e.g. `@sentry/react-native` → sentry, `firebase`, `stripe`, `@reduxjs/toolkit` → redux).
     b. Look up `ai-dev-toolkit/scripts/skill-registry.json` → match `tech_stack_mapping` entries.
     c. Run `npx skills find <keyword>` for BOTH the core tech stack AND each major dependency discovered. If this command fails, report the error and continue with registry-only results.
-    d. **PROPOSAL ONLY (STOP & ASK)**: Present the combined list of recommended skills. Ask: "I recommend these skills for your project. Which ones should I include?"
+    d. **PROPOSAL ONLY (STOP & ASK)**: Present the combined list of recommended skills. Ask: "I recommend these skills for your project. Which ones should I install locally?"
     e. **WAIT FOR EXPLICIT CONFIRMATION** (Rule 2).
-    f. Check if `.agent/setup.sh` already exists:
-    - **DOES NOT EXIST** → Create `.agent/setup.sh` from the toolkit `scripts/setup.sh` (adapted for project use), inject confirmed skill names into a `REQUIRED_SKILLS` array, and run `chmod +x .agent/setup.sh`.
+    f. For each confirmed skill, execute `npx -y skills add <skill>` via tool call in the project root. (Skills are downloaded cleanly to `.agents/skills/`).
+    g. Create Relative IDE Symlinks: Run `ln -sfn ../.agents/skills .cursor/skills`, `ln -sfn ../.agents/skills .claude/skills`, `ln -sfn ../.agents/skills .windsurf/skills`, and `ln -sfn ../.agents/skills .continue/skills` so all IDEs automatically detect the local skills.
+    h. Ensure `.agents`, `.claude`, `.cursor`, `.windsurf`, and `.continue` are REMOVED from `.gitignore` so they are fully committed to Git.
 
 12. Generate Architect & Utilities Documentation (`/scan-modules` logic):
     - **12a. Core Utilities Map**: Use the deep scan buffer from Step 4 to generate `docs/core-utils.md`. Record all available utility functions, helpers, decorators, and constants.
@@ -222,9 +220,8 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
 
 13. (Removed — tasks/ scaffolding no longer used)
 
-14. IMPORTANT: Do NOT copy global skills into `.agent/skills/`.
-    `.agent/skills/` is for project-specific skills ONLY.
-    Global skills live in `~/.agents/skills/` (managed by `npx skills`).
+14. IMPORTANT: Self-Contained Architecture.
+    The project is designed to be 100% self-contained. ALL skills (including community skills) MUST be physically stored inside `.agents/skills/`. No external symlinks to `~/.agents/` are allowed. The entire `.agents/`, `.claude/`, and `.cursor/` folders must be committed to Git to ensure zero-config sharing.
 
 15. Report summary to user:
     - Project type & Build command detected

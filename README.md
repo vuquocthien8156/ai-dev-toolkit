@@ -138,7 +138,7 @@ ai-dev-toolkit/
 │   ├── ddd-core-rules/SKILL.md        ← DDD best practices
 │   └── ...                            ← TS mastery, code review, git, etc.
 │
-├── workflows/                         ← Project & Global commands (→ .agent/workflows/ or ~/.claude/commands/)
+├── workflows/                         ← Project & Global commands (→ .agents/workflows/ or ~/.claude/commands/)
 │   ├── plan.md, checkpoint.md, status.md, resume.md, handoff.md
 │   └── debug.md, verify.md, docs.md, test.md, refactor.md, pr.md
 │
@@ -170,7 +170,7 @@ ai-dev-toolkit/
 │  DDD rules, TS mastery, code review, git workflow       │
 ├─────────────────────────────────────────────────────────┤
 │  Tier 3: WORKFLOWS (Manual)                             │
-│  <project>/.agent/workflows/*.md                         │
+│  <project>/.agents/workflows/*.md                         │
 │  Triggered by /command in chat                          │
 │  /plan, /review, /debug, /verify                        │
 └─────────────────────────────────────────────────────────┘
@@ -226,7 +226,7 @@ ai-dev-toolkit/
 
 | IDE                | Config file                               | How AI reads it                      | Template location         |
 | ------------------ | ----------------------------------------- | ------------------------------------ | ------------------------- |
-| **Antigravity**    | `GEMINI.md` + `.agent/skills/`            | Auto (rules always, skills by match) | Setup script handles this |
+| **Antigravity**    | `GEMINI.md` + `.agents/skills/`            | Auto (rules always, skills by match) | Setup script handles this |
 | **Cursor**         | `.cursorrules` in project root            | Auto reads on project open           | `cross-ide/.cursorrules`  |
 | **Claude Code**    | `CLAUDE.md` in project root               | Auto reads on project open           | `cross-ide/CLAUDE.md`     |
 | **Windsurf**       | `.windsurfrules` + `.windsurf/workflows/` | Auto reads on project open           | Setup script handles this |
@@ -316,22 +316,24 @@ setup-antigravity.sh --rules --workflows --force
 
 ## Adding to a New Project
 
+1. Run the toolkit setup script:
 ```bash
 cd <your-project>
 ~/Documents/ai-dev-toolkit/scripts/setup.sh
 ```
+2. Open your IDE and ask your AI to run the `/refresh-context` workflow.
+3. The AI will scan your project, propose community skills, download them physically into `.agents/skills/`, and create relative symlinks for all your IDEs (`.claude`, `.cursor`, `.windsurf`, etc.).
 
-That's it. The script creates `.agent/workflows/`, `.claude/commands/`, `.windsurf/workflows/` and installs global skills + rules.
+That's it. The repository is now **100% Self-Contained**. All workflows, skills, and Pointers are tracked in Git.
 
 ---
 
 ## Team Onboarding
 
-For a new team member:
+Because this toolkit uses a **Zero-Config Self-Contained Architecture**, onboarding a new team member to a project is incredibly simple:
 
-1. **Clone the project** → workflows in `.agent/workflows/` are included
-2. **Run setup script** → installs global rules + skills
-3. **Verify** → open Antigravity → Customizations → check Rules + Workflows tabs
-4. **Done** — AI now understands project context and follows all conventions
+1. **Clone the project**
+2. **Done!**
+   - The AI IDE will automatically follow the relative symlinks (e.g., `.claude/skills -> ../.agents/skills`) and load the project-specific skills and workflows instantly without requiring the developer to run any installation scripts.
 
-> **Note**: User rules in `GEMINI.md` are personal (not committed to git). Each team member runs the setup script once on their machine.
+*(Optional)* If the team member wants to install the **Global Tier 1 Rules** (like strict English output, no-assumption behavior) across their entire machine, they can clone this toolkit and run `setup.sh --rules` on their machine once.

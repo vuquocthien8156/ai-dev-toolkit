@@ -77,7 +77,7 @@ d. 🚨 **Workaround** (ONLY if no other option): clearly label as "CHEAT". Expl
 
 After every task, evaluate: "Is there knowledge worth preserving?"
 
-- Business decisions → `docs/<module>/decisions/`
+- Business decisions & knowledge → `docs/modules/<module>/domains/` (Entity Pages)
 - Patterns/conventions → project context files
 - Repeatable processes → workflow definitions
 - Only preserve if at least ONE criterion met:

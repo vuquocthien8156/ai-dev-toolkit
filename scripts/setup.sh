@@ -92,7 +92,7 @@ PROJECT_WINDSURF_DIR=".windsurf"
 
 AGENTS_RULES_DIR="$HOME/.agents/rules"
 
-PROJECT_AGENT_DIR=".agent"
+PROJECT_AGENT_DIR=".agents"
 PROJECT_CLAUDE_DIR=".claude"
 
 echo "🚀 AI Dev Toolkit — Multi-IDE Setup"
@@ -197,6 +197,18 @@ if [ "$ONLY_SKILLS" = true ]; then
         echo "   ✅ $skill_name (source)"
       fi
     done
+    
+    # 2.1.b Copy explicitly requested global skills to Project for Team Sharing
+    if [ -d ".git" ] || [ -d "$PROJECT_AGENT_DIR" ]; then
+      mkdir -p "$PROJECT_AGENT_DIR/skills"
+      for target_skill in "skill-creator" "llm-wiki-schema"; do
+        if [ -d "$TOOLKIT_DIR/skills/$target_skill" ]; then
+          # Use trailing slash on dest but not source to copy the folder itself
+          cp -r "$TOOLKIT_DIR/skills/$target_skill" "$PROJECT_AGENT_DIR/skills/" 2>/dev/null || true
+          echo "   ✅ $target_skill (project)"
+        fi
+      done
+    fi
   fi
 
   # 2.2 Community skills
@@ -215,14 +227,13 @@ if [ "$ONLY_SKILLS" = true ]; then
   link_skills() {
     local dest_dir="$1"
     local ide_name="$2"
-    mkdir -p "$dest_dir"
     echo "   🔗 Linking to $ide_name..."
-    for skill_path in "$AGENTS_SKILLS_DIR"/*/; do
-      skill_name=$(basename "$skill_path")
-      if [ -f "$skill_path/SKILL.md" ]; then
-        ln -sf "$skill_path" "$dest_dir/$skill_name" 2>/dev/null || true
-      fi
-    done
+    # Ensure the parent directory exists
+    mkdir -p "$(dirname "$dest_dir")"
+    # Remove existing dest_dir to cleanly link the whole folder
+    rm -rf "$dest_dir" 2>/dev/null || true
+    # Symlink the entire skills folder globally
+    ln -sfn "$AGENTS_SKILLS_DIR" "$dest_dir"
   }
 
   [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "antigravity" ]] && link_skills "$ANTIGRAVITY_SKILLS" "Antigravity"
@@ -266,8 +277,11 @@ if [ "$ONLY_WORKFLOWS" = true ]; then
     echo "   🌍 Claude Global → $CLAUDE_COMMANDS"
     copy_wf "$CLAUDE_COMMANDS"
     if [ -d ".git" ] || [ -d "$PROJECT_CLAUDE_DIR" ]; then
-      echo "   📁 Claude Project → $PROJECT_CLAUDE_DIR/commands"
-      copy_wf "$PROJECT_CLAUDE_DIR/commands"
+      echo "   📁 Claude Project → $PROJECT_CLAUDE_DIR/commands (symlink to .agents/workflows)"
+      mkdir -p "$PROJECT_CLAUDE_DIR"
+      # Remove old directory if it's not a symlink to prevent conflicts
+      [ ! -L "$PROJECT_CLAUDE_DIR/commands" ] && rm -rf "$PROJECT_CLAUDE_DIR/commands" 2>/dev/null || true
+      ln -sfn ../.agents/workflows "$PROJECT_CLAUDE_DIR/commands"
     fi
   fi
 
@@ -276,10 +290,27 @@ if [ "$ONLY_WORKFLOWS" = true ]; then
     echo "   🌍 Windsurf Global → $WINDSURF_WORKFLOWS"
     copy_wf "$WINDSURF_WORKFLOWS"
     if [ -d ".git" ] || [ -d "$PROJECT_WINDSURF_DIR" ]; then
-      echo "   📁 Windsurf Project → $PROJECT_WINDSURF_DIR/workflows"
-      copy_wf "$PROJECT_WINDSURF_DIR/workflows"
+      echo "   📁 Windsurf Project → $PROJECT_WINDSURF_DIR/workflows (symlink to .agents/workflows)"
+      mkdir -p "$PROJECT_WINDSURF_DIR"
+      [ ! -L "$PROJECT_WINDSURF_DIR/workflows" ] && rm -rf "$PROJECT_WINDSURF_DIR/workflows" 2>/dev/null || true
+      ln -sfn ../.agents/workflows "$PROJECT_WINDSURF_DIR/workflows"
     fi
   fi
+  
+  # 3b. Gitignore Injection for Multi-IDE cleanliness
+  if [ -d ".git" ] && [ -f ".gitignore" ]; then
+    echo "   🛡️  Ensuring clean .gitignore for multi-IDE..."
+    # Add explicit ignores for local settings if not present
+    if ! grep -q "settings.local.json" .gitignore; then
+      echo -e "\n# AI Agent Local Settings\n.claude/settings.local.json\n.claude/mcp.json\n.cursor/workspace.json\n.windsurf/workspace.json" >> .gitignore
+    fi
+    # Remove blanket ignores for IDE folders so symlinks can be tracked
+    if grep -q -E "^\.(claude|windsurf|cursor|gemini)/?$" .gitignore; then
+      sed -i.bak -E '/^\.(claude|windsurf|cursor|gemini)\/?$/d' .gitignore && rm -f .gitignore.bak
+      echo "      ✅ Removed blanket IDE folder ignores"
+    fi
+  fi
+  
   echo ""
 fi
 

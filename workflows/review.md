@@ -2,7 +2,7 @@
 description: Systematic code review checklist. Checks patterns, types, errors, performance.
 ---
 
-0. Check if `.agent/skills/project-context/SKILL.md` exists and is fresh
+0. Check if `.agents/skills/project-context/SKILL.md` exists and is fresh
    - Missing? → Suggest: "Run /refresh-context first"
    - Older than 30 days or >50 commits since? → Suggest: "Run /refresh-context --update"
      📚 Load skills: `code-review`, `security-best-practices`
