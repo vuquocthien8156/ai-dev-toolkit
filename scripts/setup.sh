@@ -193,7 +193,7 @@ if [ "$ONLY_SKILLS" = true ]; then
     for skill_dir in "$TOOLKIT_DIR/skills"/*/; do
       skill_name=$(basename "$skill_dir")
       if [ -f "$skill_dir/SKILL.md" ]; then
-        cp -r "$skill_dir" "$AGENTS_SKILLS_DIR/" 2>/dev/null || true
+        cp -r "${skill_dir%/}" "$AGENTS_SKILLS_DIR/" 2>/dev/null || true
         echo "   ✅ $skill_name (source)"
       fi
     done
@@ -201,10 +201,18 @@ if [ "$ONLY_SKILLS" = true ]; then
     # 2.1.b Copy explicitly requested global skills to Project for Team Sharing
     if [ -d ".git" ] || [ -d "$PROJECT_AGENT_DIR" ]; then
       mkdir -p "$PROJECT_AGENT_DIR/skills"
-      for target_skill in "skill-creator" "llm-wiki-schema"; do
+      
+      # Core skills that MUST be local to the project for zero-config workflows to work
+      CORE_PROJECT_SKILLS=(
+        "skill-creator"
+        "llm-wiki-schema"
+        "llm-wiki-router"
+        "project-scanner"
+      )
+      
+      for target_skill in "${CORE_PROJECT_SKILLS[@]}"; do
         if [ -d "$TOOLKIT_DIR/skills/$target_skill" ]; then
-          # Use trailing slash on dest but not source to copy the folder itself
-          cp -r "$TOOLKIT_DIR/skills/$target_skill" "$PROJECT_AGENT_DIR/skills/" 2>/dev/null || true
+          cp -r "${TOOLKIT_DIR}/skills/${target_skill%/}" "$PROJECT_AGENT_DIR/skills/" 2>/dev/null || true
           echo "   ✅ $target_skill (project)"
         fi
       done
