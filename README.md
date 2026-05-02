@@ -217,7 +217,7 @@ ai-dev-toolkit/
 | `/handoff`    | Session summary         | Ending a session      |
 | `/debug`      | Systematic debugging    | Stuck on a bug        |
 | `/verify`     | Evidence-based check    | Before finishing      |
-| `/docs`       | Capture logic           | Smarter aggregation   |
+| `/docs`       | Maintain LLM Wiki       | Update entities, synthesize knowledge, or lint docs |
 
 ---
 

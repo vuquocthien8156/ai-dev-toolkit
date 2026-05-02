@@ -22,6 +22,7 @@ Do not lose valuable context. Extract architectural decisions, bug fix patterns,
 | --------------------------------------- | ---------------------------------------- | ------------------------------ |
 | Business rules & domain logic           | `docs/modules/<module>/domains/`         | Entity Pages (`subscription.md`) |
 | Cross-cutting use cases                 | `docs/modules/<module>/use-cases/`       | Concept Pages (`tenant.md`)      |
+| Execution flows (sequence & call chains)| `docs/modules/<module>/domains/<domain>/flows/` | `<feature>.flow.md`       |
 | Coding patterns & conventions           | `.agents/skills/project-context/SKILL.md` | Append to relevant section     |
 | Repeatable agent workflows              | `.agents/workflows/`                      | `command-name.md`              |
 | Wiki Index                              | `docs/index.md`                          | Markdown list of links         |
@@ -37,3 +38,7 @@ If an Entity Page exists for the topic (e.g., `invoice.md`), APPEND the new know
 At the end of a successful task, before declaring "DONE", evaluate:
 "Did we establish a new pattern or figure out something complex?"
 If Yes → Propose running the `/docs` workflow to update the LLM Wiki.
+
+Additionally, after answering a complex architectural question or explaining a system flow:
+"Should we file this synthesis as a Concept Page using `/docs`?"
+If Yes → Run `/docs` in Synthesize mode.
