@@ -16,6 +16,9 @@ Use this workflow to update or restructure the project's documentation using the
 
 ## Process
 
+### 0. Load Core Rules
+You MUST read `.agents/skills/llm-wiki-schema/SKILL.md` and `.agents/skills/llm-wiki-router/SKILL.md` to understand the strict structural and formatting rules (like mandatory YAML frontmatter).
+
 ### 1. Locate the Root Index
 Find the main documentation folder (usually `docs/`) and read `docs/index.md`.
 If `docs/index.md` does not exist, ask the user if you should initialize the Root Wiki.
