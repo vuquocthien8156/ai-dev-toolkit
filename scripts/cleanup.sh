@@ -5,7 +5,7 @@
 # It safely wipes global skill directories and IDE symlinks.
 #
 # Usage:
-#   ~/Documents/ai-dev-toolkit/scripts/cleanup.sh
+#   npx github:vuquocthien8156/ai-dev-toolkit --clean
 
 set -e
 
@@ -44,5 +44,5 @@ echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo "✅ System is clean!"
 echo "👉 Now run the setup script to rebuild:"
-echo "   ~/Documents/ai-dev-toolkit/scripts/setup.sh --force"
+echo "   npx github:vuquocthien8156/ai-dev-toolkit --force"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

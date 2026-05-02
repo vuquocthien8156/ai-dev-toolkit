@@ -3,7 +3,7 @@
 #
 # Usage:
 #   cd <your-project>
-#   ~/Documents/ai-dev-toolkit/scripts/setup.sh
+#   npx github:vuquocthien8156/ai-dev-toolkit
 #
 # What it does:
 #   1. Updates global rules → ~/.gemini/GEMINI.md, ~/.claude/CLAUDE.md, ~/.cursor/rules/, ~/.windsurfrules
@@ -22,12 +22,12 @@
 #   --clean       Clean global skills and IDE symlinks (Safe Reset)
 #
 # Examples:
-#   setup.sh                     # Run everything for all IDEs
-#   setup.sh --ide claude        # Only setup Claude Code
-#   setup.sh --ide cursor        # Only setup Cursor
-#   setup.sh --ide windsurf      # Only setup Windsurf
-#   setup.sh --workflows --force # Only update workflows, overwrite
-#   setup.sh --clean             # Reset global skills
+#   npx github:vuquocthien8156/ai-dev-toolkit                     # Run everything for all IDEs
+#   npx github:vuquocthien8156/ai-dev-toolkit --ide claude        # Only setup Claude Code
+#   npx github:vuquocthien8156/ai-dev-toolkit --ide cursor        # Only setup Cursor
+#   npx github:vuquocthien8156/ai-dev-toolkit --ide windsurf      # Only setup Windsurf
+#   npx github:vuquocthien8156/ai-dev-toolkit --workflows --force # Only update workflows, overwrite
+#   npx github:vuquocthien8156/ai-dev-toolkit --clean             # Reset global skills
 
 set -e
 

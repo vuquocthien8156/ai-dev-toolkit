@@ -39,8 +39,7 @@ chmod +x ai-dev-toolkit/scripts/setup.sh
 ### Step 2: Run setup from inside your project
 
 ```bash
-cd ~/your-project-folder
-~/Documents/ai-dev-toolkit/scripts/setup.sh
+npx github:vuquocthien8156/ai-dev-toolkit
 ```
 
 This one command does:
@@ -226,7 +225,7 @@ ai-dev-toolkit/
 
 | IDE                | Config file                               | How AI reads it                      | Template location         |
 | ------------------ | ----------------------------------------- | ------------------------------------ | ------------------------- |
-| **Antigravity**    | `GEMINI.md` + `.agents/skills/`            | Auto (rules always, skills by match) | Setup script handles this |
+| **Antigravity**    | `GEMINI.md` + `.agents/skills/`           | Auto (rules always, skills by match) | Setup script handles this |
 | **Cursor**         | `.cursorrules` in project root            | Auto reads on project open           | `cross-ide/.cursorrules`  |
 | **Claude Code**    | `CLAUDE.md` in project root               | Auto reads on project open           | `cross-ide/CLAUDE.md`     |
 | **Windsurf**       | `.windsurfrules` + `.windsurf/workflows/` | Auto reads on project open           | Setup script handles this |
@@ -271,7 +270,7 @@ git pull   # or edit files directly
 
 # 2. Re-run setup in each project (runs all steps)
 cd ~/Documents/Zigvy/hr-forte/hr-leave-module
-~/Documents/ai-dev-toolkit/scripts/setup-antigravity.sh
+npx github:vuquocthien8156/ai-dev-toolkit
 ```
 
 ### Selective Updates
@@ -280,16 +279,16 @@ Instead of running everything, use flags to run only what you need:
 
 ```bash
 # Only update workflows (most common after editing .md files)
-setup-antigravity.sh --workflows --force
+setup.sh --workflows --force
 
 # Only refresh global rules
-setup-antigravity.sh --rules
+setup.sh --rules
 
 # Only reinstall skills
-setup-antigravity.sh --skills
+setup.sh --skills
 
 # Combine flags
-setup-antigravity.sh --rules --workflows --force
+setup.sh --rules --workflows --force
 ```
 
 ### Flag Reference
@@ -317,10 +316,12 @@ setup-antigravity.sh --rules --workflows --force
 ## Adding to a New Project
 
 1. Run the toolkit setup script:
+
 ```bash
 cd <your-project>
-~/Documents/ai-dev-toolkit/scripts/setup.sh
+npx github:vuquocthien8156/ai-dev-toolkit
 ```
+
 2. Open your IDE and ask your AI to run the `/refresh-context` workflow.
 3. The AI will scan your project, propose community skills, download them physically into `.agents/skills/`, and create relative symlinks for all your IDEs (`.claude`, `.cursor`, `.windsurf`, etc.).
 
@@ -336,4 +337,4 @@ Because this toolkit uses a **Zero-Config Self-Contained Architecture**, onboard
 2. **Done!**
    - The AI IDE will automatically follow the relative symlinks (e.g., `.claude/skills -> ../.agents/skills`) and load the project-specific skills and workflows instantly without requiring the developer to run any installation scripts.
 
-*(Optional)* If the team member wants to install the **Global Tier 1 Rules** (like strict English output, no-assumption behavior) across their entire machine, they can clone this toolkit and run `setup.sh --rules` on their machine once.
+_(Optional)_ If the team member wants to install the **Global Tier 1 Rules** (like strict English output, no-assumption behavior) across their entire machine, they can clone this toolkit and run `setup.sh --rules` on their machine once.
