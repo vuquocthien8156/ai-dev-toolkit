@@ -21,12 +21,14 @@ EVERY markdown file you create or update in the Wiki MUST contain a YAML frontma
 ```yaml
 ---
 tags: [domain, topic]
+description: A single sentence summarizing the content of this file.
 date_updated: YYYY-MM-DD
 ---
 ```
 
 Fields:
 - `tags`: Domain and topic identifiers for categorization and search.
+- `description`: A mandatory, single-sentence summary. Used for rapid scanning via `grep`.
 - `date_updated`: Last modification date. Always update when editing a page.
 
 ## 3. Formatting & Structure Rules

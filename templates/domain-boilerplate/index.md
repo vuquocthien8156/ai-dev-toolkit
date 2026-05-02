@@ -1,5 +1,6 @@
 ---
 tags: [domain-name, index]
+description: Entry point and context summary for the <Domain Name> domain.
 date_updated: YYYY-MM-DD
 ---
 # Domain: <Domain Name>
