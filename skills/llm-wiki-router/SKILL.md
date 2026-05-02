@@ -9,6 +9,14 @@ description: Rules for maintaining the project's LLM Wiki. Use this to route kno
 
 Do not lose valuable context. Extract architectural decisions, bug fix patterns, and domain knowledge into the project's LLM Wiki using the `/docs` workflow.
 
+**The Wiki is the Source of Truth.** If code and wiki contradict, the wiki represents the *intended* logic (unless flagged as stale).
+
+## Inquiry Rule (Self-Correction)
+
+Before answering any architectural or domain-specific question, you MUST run a metadata scan to locate the most relevant Source of Truth:
+- Command: `grep -r "description:" docs/`
+- Action: Read the `description` fields to identify which file contains the definitive answer before reading the full content or making assumptions.
+
 ## Quality Rules (Essence Distillation)
 
 - DISTILL, never summarize. Remove noise; keep decision-grade core.
