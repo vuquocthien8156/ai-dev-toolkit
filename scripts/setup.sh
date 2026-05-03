@@ -14,14 +14,14 @@
 #   4. Health check
 #
 # Flags:
-#   --machine     Setup global environment ($HOME/.agents, IDE configs)
-#   --project     Setup local project environment (.agents folder, IDE symlinks)
-#   --force       Overwrite existing files
-#   --rules       Only update global rules (Step 1 + 1b)
-#   --skills      Only install skills (Steps 2 + 2.5)
-#   --workflows   Only copy workflows (Step 3)
-#   --ide <name>  Target IDE: antigravity, claude, cursor, windsurf, or all (default: all)
-#   --clean       Clean global skills and IDE symlinks (Safe Reset)
+#   -m, --machine     Setup global environment ($HOME/.agents, IDE configs)
+#   -p, --project     Setup local project environment (.agents folder, IDE symlinks)
+#   -f, --force       Overwrite existing files
+#   -r, --rules       Only update global rules (Step 1 + 1b)
+#   -s, --skills      Only install skills (Steps 2 + 2.5)
+#   -w, --workflows   Only copy workflows (Step 3)
+#   -i, --ide <name>  Target IDE: antigravity, claude, cursor, windsurf, or all (default: all)
+#   -c, --clean       Clean global skills and IDE symlinks (Safe Reset)
 #
 # Examples:
 #   npx github:vuquocthien8156/ai-dev-toolkit --machine           # Setup your PC (run once)
@@ -52,15 +52,15 @@ SCOPE_PROJECT=false
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --machine)    SCOPE_MACHINE=true; shift ;;
-    --project)    SCOPE_PROJECT=true; shift ;;
-    --force)      FORCE=true; shift ;;
-    --rules)      ONLY_RULES=true; HAS_STEP_FLAG=true; shift ;;
-    --skills)     ONLY_SKILLS=true; HAS_STEP_FLAG=true; shift ;;
-    --workflows)  ONLY_WORKFLOWS=true; HAS_STEP_FLAG=true; shift ;;
-    --ide)        TARGET_IDE="$2"; shift 2 ;;
-    --clean)      "$SCRIPT_DIR/cleanup.sh"; exit 0 ;;
-    *)            shift ;;
+    -m|--machine)    SCOPE_MACHINE=true; shift ;;
+    -p|--project)    SCOPE_PROJECT=true; shift ;;
+    -f|--force)      FORCE=true; shift ;;
+    -r|--rules)      ONLY_RULES=true; HAS_STEP_FLAG=true; shift ;;
+    -s|--skills)     ONLY_SKILLS=true; HAS_STEP_FLAG=true; shift ;;
+    -w|--workflows)  ONLY_WORKFLOWS=true; HAS_STEP_FLAG=true; shift ;;
+    -i|--ide)        TARGET_IDE="$2"; shift 2 ;;
+    -c|--clean)      "$SCRIPT_DIR/cleanup.sh"; exit 0 ;;
+    *)               shift ;;
   esac
 done
 

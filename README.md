@@ -296,15 +296,16 @@ setup.sh --rules --workflows --force
 
 ### Flag Reference
 
-| Flag          | What it does                         |
-| ------------- | ------------------------------------ |
-| _(no flags)_  | Defaults to `--machine`              |
-| `--machine`   | Setup global environment ($HOME/...) |
-| `--project`   | Setup local project environment      |
-| `--rules`     | Only Step 1: update global rules     |
-| `--skills`    | Only Steps 2+2.5: install all skills |
-| `--workflows` | Only Step 3: copy workflows          |
-| `--force`     | Overwrite existing files (any step)  |
+| Flag | Short | What it does |
+| ------------- | ----- | ------------------------------------ |
+| _(no flags)_ | | Defaults to `--machine` |
+| `--machine` | `-m` | Setup global environment ($HOME/...) |
+| `--project` | `-p` | Setup local project environment |
+| `--rules` | `-r` | Only Step 1: update global rules |
+| `--skills` | `-s` | Only Steps 2+2.5: install all skills |
+| `--workflows` | `-w` | Only Step 3: copy workflows |
+| `--force` | `-f` | Overwrite existing files (any step) |
+| `--clean` | `-c` | Clean global skills and IDE symlinks |
 
 ### Overwrite Behavior
 
