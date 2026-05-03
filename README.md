@@ -36,17 +36,20 @@ git clone <your-repo-url> ai-dev-toolkit
 chmod +x ai-dev-toolkit/scripts/setup.sh
 ```
 
-### Step 2: Run setup from inside your project
+### Step 2: Run setup
 
+**A. Setup your Global Machine Environment (Run once)**
 ```bash
-npx github:vuquocthien8156/ai-dev-toolkit
+npx github:vuquocthien8156/ai-dev-toolkit --machine
 ```
+This sets up `~/.gemini`, `~/.claude`, global templates, and global skills. (This is the default if no flag is provided).
 
-This one command does:
-
-1. Writes global rules to `~/.gemini/GEMINI.md` (Antigravity) and `~/.claude/CLAUDE.md` (Claude Code).
-2. Installs community skills and symlinks them to all supported IDEs.
-3. Copies workflows/commands to both global and project directories.
+**B. Setup a specific Project**
+```bash
+cd <your-project>
+npx github:vuquocthien8156/ai-dev-toolkit --project
+```
+This isolates the toolkit to your project by creating `.agents/` and generating IDE symlinks without polluting your global machine state.
 
 > **Selective execution**: Use `--rules`, `--skills`, or `--workflows` to run only specific steps.
 > See [Updating](#updating) for details.
@@ -295,7 +298,9 @@ setup.sh --rules --workflows --force
 
 | Flag          | What it does                         |
 | ------------- | ------------------------------------ |
-| _(no flags)_  | Runs ALL steps (default)             |
+| _(no flags)_  | Defaults to `--machine`              |
+| `--machine`   | Setup global environment ($HOME/...) |
+| `--project`   | Setup local project environment      |
 | `--rules`     | Only Step 1: update global rules     |
 | `--skills`    | Only Steps 2+2.5: install all skills |
 | `--workflows` | Only Step 3: copy workflows          |
