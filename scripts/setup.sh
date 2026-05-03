@@ -76,8 +76,11 @@ if [ "$HAS_STEP_FLAG" = false ]; then
   ONLY_WORKFLOWS=true
 fi
 
-# Source of truth for skills
+# Source of truth directories (Global)
+AGENTS_RULES_DIR="$HOME/.agents/rules"
 AGENTS_SKILLS_DIR="$HOME/.agents/skills"
+AGENTS_TEMPLATES_DIR="$HOME/.agents/templates"
+AGENTS_WORKFLOWS_DIR="$HOME/.agents/workflows"
 
 # IDE Paths
 ANTIGRAVITY_BASE="$HOME/.gemini"
@@ -96,13 +99,10 @@ CURSOR_RULES="$CURSOR_BASE/rules"
 WINDSURF_RULES_GLOBAL="$HOME/.windsurfrules"
 WINDSURF_WORKFLOWS="$HOME/.windsurf/workflows"
 WINDSURF_SKILLS="$HOME/.windsurf/skills"
-PROJECT_WINDSURF_DIR=".windsurf"
-
-AGENTS_RULES_DIR="$HOME/.agents/rules"
-AGENTS_TEMPLATES_DIR="$HOME/.agents/templates"
 
 PROJECT_AGENT_DIR=".agents"
 PROJECT_CLAUDE_DIR=".claude"
+PROJECT_WINDSURF_DIR=".windsurf"
 
 echo "🚀 AI Dev Toolkit — Multi-IDE Setup"
 echo "   Toolkit: $TOOLKIT_DIR"
@@ -112,112 +112,106 @@ echo "   Scopes:  Machine=$SCOPE_MACHINE, Project=$SCOPE_PROJECT"
 echo ""
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Step 1: Update Global Rules
+# Helpers
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-update_rules() {
+
+# Safely create a symlink: remove existing regular files/folders if they are not symlinks
+safe_link() {
   local src="$1"
   local dest="$2"
   local name="$3"
 
-  if [ -f "$src" ]; then
-    mkdir -p "$(dirname "$dest")"
-    if cmp -s "$src" "$dest"; then
-      echo "   ✅ $name is up-to-date"
-    else
-      cp "$src" "$dest" 2>/dev/null || cat "$src" > "$dest" 2>/dev/null || \
-      echo "   ⚠️  Could not update $name (macOS permission). Copy manually."
-    fi
-  else
-    echo "   ⚠️  Source not found: $src"
+  if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+    rm -rf "$dest" 2>/dev/null || true
   fi
+  mkdir -p "$(dirname "$dest")"
+  ln -sfn "$src" "$dest"
+  echo "   🔗 $name → $src"
 }
 
-# Cursor rules need .mdc frontmatter wrapper
-update_rules_cursor() {
-  local src="$1"
-  local dest="$2"
-  local name="$3"
+# Sync from Repo to ~/.agents (The Source of Truth)
+sync_to_agents() {
+  echo "📦 Step 0: Syncing Toolkit to ~/.agents"
+  mkdir -p "$AGENTS_RULES_DIR" "$AGENTS_SKILLS_DIR" "$AGENTS_TEMPLATES_DIR" "$AGENTS_WORKFLOWS_DIR"
 
-  if [ -f "$src" ]; then
-    mkdir -p "$(dirname "$dest")"
-    local tmp=$(mktemp)
-    cat > "$tmp" <<'FRONTMATTER'
----
-description: Core behavioral guidelines for AI coding assistant
-alwaysApply: true
----
-FRONTMATTER
-    cat "$src" >> "$tmp"
-    if cmp -s "$tmp" "$dest"; then
-      echo "   ✅ $name is up-to-date"
-    else
-      cp "$tmp" "$dest" 2>/dev/null || cat "$tmp" > "$dest" 2>/dev/null || \
-      echo "   ⚠️  Could not update $name (macOS permission). Copy manually."
-    fi
-    rm -f "$tmp"
-  else
-    echo "   ⚠️  Source not found: $src"
-  fi
-}
-
-# Copy reference rules (workflow-protocol, examples) to shared location
-copy_reference_rules() {
-  local src_dir="$1"
+  # Rules & Cursor .mdc generation
   mkdir -p "$AGENTS_RULES_DIR"
-  for ref_file in "workflow-protocol.md" "examples-violations.md"; do
-    if [ -f "$src_dir/$ref_file" ]; then
-      if cmp -s "$src_dir/$ref_file" "$AGENTS_RULES_DIR/$ref_file"; then
-        echo "   ✅ $ref_file is up-to-date"
-      else
-        cp "$src_dir/$ref_file" "$AGENTS_RULES_DIR/$ref_file" 2>/dev/null || true
-        echo "   ✅ $ref_file → $AGENTS_RULES_DIR/"
-      fi
+  cp -r "$TOOLKIT_DIR/user-rules"/* "$AGENTS_RULES_DIR/" 2>/dev/null || true
+  
+  # Recursively find all .md files in the rules source
+  find "$AGENTS_RULES_DIR" -name "*.md" | while read rule_file; do
+    local filename=$(basename "$rule_file")
+    local base="${filename%.*}"
+    local dir=$(dirname "$rule_file")
+    local mdc_dest="$dir/$base.mdc"
+    
+    # Skip if it's already a backup or reference
+    [[ "$filename" == *.bak ]] && continue
+    [[ "$filename" == "workflow-protocol.md" ]] && continue
+    [[ "$filename" == "examples-violations.md" ]] && continue
+
+    echo "---" > "$mdc_dest"
+    if [ "$filename" == "memory-rules.md" ]; then
+      echo "description: Core behavioral guidelines for AI coding assistant" >> "$mdc_dest"
+      echo "alwaysApply: true" >> "$mdc_dest"
+    elif [ "$filename" == "backend-rules.md" ]; then
+      echo "description: Backend specific rules (NestJS/Node.js)" >> "$mdc_dest"
+      echo "globs: [\"src/backend/**/*\", \"apps/backend/**/*\", \"**/service.ts\", \"**/controller.ts\", \"**/repository.ts\"]" >> "$mdc_dest"
+    elif [ "$filename" == "frontend-rules.md" ]; then
+      echo "description: Frontend specific rules (Next.js/React)" >> "$mdc_dest"
+      echo "globs: [\"src/frontend/**/*\", \"apps/frontend/**/*\", \"**/components/**/*\", \"**/pages/**/*\"]" >> "$mdc_dest"
+    elif [ "$filename" == "mobile-rules.md" ]; then
+      echo "description: Mobile specific rules (Expo/React Native)" >> "$mdc_dest"
+      echo "globs: [\"src/mobile/**/*\", \"apps/mobile/**/*\", \"**/screens/**/*\"]" >> "$mdc_dest"
+    else
+      echo "description: Technical rules for $base" >> "$mdc_dest"
+      echo "globs: []" >> "$mdc_dest"
     fi
+    echo "---" >> "$mdc_dest"
+    cat "$rule_file" >> "$mdc_dest"
   done
-}
 
-# Copy templates to shared location
-copy_templates() {
-  local src_dir="$1"
-  
-  if [ "$SCOPE_MACHINE" = true ]; then
-    mkdir -p "$AGENTS_TEMPLATES_DIR"
-    if [ -d "$src_dir" ]; then
-      cp -r "$src_dir"/* "$AGENTS_TEMPLATES_DIR/" 2>/dev/null || true
-      echo "   ✅ Templates → $AGENTS_TEMPLATES_DIR/ (global)"
-    fi
+  # Skills
+  if [ -d "$TOOLKIT_DIR/skills" ]; then
+    cp -r "$TOOLKIT_DIR/skills"/* "$AGENTS_SKILLS_DIR/" 2>/dev/null || true
+  fi
+
+  # Workflows
+  if [ -d "$TOOLKIT_DIR/workflows" ]; then
+    cp -r "$TOOLKIT_DIR/workflows"/* "$AGENTS_WORKFLOWS_DIR/" 2>/dev/null || true
+  fi
+
+  # Templates
+  if [ -d "$TOOLKIT_DIR/templates" ]; then
+    cp -r "$TOOLKIT_DIR/templates"/* "$AGENTS_TEMPLATES_DIR/" 2>/dev/null || true
   fi
   
-  if [ "$SCOPE_PROJECT" = true ]; then
-    if [ -d ".git" ] || [ -d "$PROJECT_AGENT_DIR" ]; then
-      local proj_temp="$PROJECT_AGENT_DIR/templates"
-      mkdir -p "$proj_temp"
-      if [ -d "$src_dir" ]; then
-        cp -r "$src_dir"/* "$proj_temp/" 2>/dev/null || true
-        echo "   ✅ Templates → $proj_temp/ (project)"
-      fi
-    fi
-  fi
+  echo "   ✅ Global source of truth updated."
+  echo ""
 }
 
-RULES_SRC="$TOOLKIT_DIR/user-rules/memory-rules.md"
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# Step 1: Update Global Rules (Symlink Edition)
+# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  if [ "$ONLY_RULES" = true ] && [ "$SCOPE_MACHINE" = true ]; then
+  sync_to_agents
+  echo "📝 Step 1: Global core rules (Symlinks)"
+  
+  rule_src=$(find "$AGENTS_RULES_DIR" -name "memory-rules.md" | head -n 1)
+  
+  [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "antigravity" ]] && safe_link "$rule_src" "$ANTIGRAVITY_RULES" "Antigravity rules"
+  [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "claude" ]] && safe_link "$rule_src" "$CLAUDE_RULES" "Claude Code rules"
+  [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "windsurf" ]] && safe_link "$rule_src" "$WINDSURF_RULES_GLOBAL" "Windsurf rules"
 
-if [ "$ONLY_RULES" = true ]; then
-  if [ "$SCOPE_MACHINE" = true ]; then
-    echo "📝 Step 1: Global core rules"
-    [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "antigravity" ]] && update_rules "$RULES_SRC" "$ANTIGRAVITY_RULES" "Antigravity rules"
-    [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "claude" ]] && update_rules "$RULES_SRC" "$CLAUDE_RULES" "Claude Code rules"
-    [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "cursor" ]] && update_rules_cursor "$RULES_SRC" "$CURSOR_RULES/user-rules.mdc" "Cursor rules"
-    [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "windsurf" ]] && update_rules "$RULES_SRC" "$WINDSURF_RULES_GLOBAL" "Windsurf rules"
-
-    echo ""
-    echo "📝 Step 1b: Reference rules (shared)"
-    copy_reference_rules "$TOOLKIT_DIR/user-rules"
-    echo ""
+  # Link all .mdc files to Cursor (flattened)
+  if [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "cursor" ]]; then
+    echo "📝 Step 1a: Cursor specialized rules (.mdc)"
+    mkdir -p "$CURSOR_RULES"
+    find "$AGENTS_RULES_DIR" -name "*.mdc" | while read mdc_file; do
+      mdc_name=$(basename "$mdc_file")
+      safe_link "$mdc_file" "$CURSOR_RULES/$mdc_name" "Cursor rule: $mdc_name"
+    done
   fi
-
-  echo "📝 Step 1c: Templates"
-  copy_templates "$TOOLKIT_DIR/templates"
   echo ""
 fi
 
@@ -226,45 +220,34 @@ fi
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if [ "$ONLY_SKILLS" = true ]; then
   if [ "$SCOPE_MACHINE" = true ]; then
-    echo "📦 Step 2a: Installing global skills"
-    mkdir -p "$AGENTS_SKILLS_DIR"
-
-    # 2.1 Copy self-written skills to source of truth
-    if [ -d "$TOOLKIT_DIR/skills" ]; then
-      for skill_dir in "$TOOLKIT_DIR/skills"/*/; do
-        skill_name=$(basename "$skill_dir")
-        if [ -f "$skill_dir/SKILL.md" ]; then
-          cp -r "${skill_dir%/}" "$AGENTS_SKILLS_DIR/" 2>/dev/null || true
-          echo "   ✅ $skill_name (global source)"
-        fi
-      done
-    fi
-
-    # 2.2 Community skills
+    echo "📦 Step 2a: Linking global skills"
+    # Community skills (only install if missing or force)
     echo "🌐 Step 2a.1: Community skills"
     COMMUNITY_SKILLS=(
       "obra/superpowers --skill systematic-debugging"
       "akillness/oh-my-skills --skill backend-testing"
       "sickn33/antigravity-awesome-skills --skill api-security-best-practices"
+      "kadajett/agent-nestjs-skills --skill nestjs-best-practices"
+      "vercel-labs/agent-skills --skill vercel-react-best-practices"
+      "vercel-labs/agent-skills --skill vercel-react-native-skills"
+      "expo/skills --skill upgrading-expo"
+      "expo/skills --skill expo-deployment"
+      "sickn33/antigravity-awesome-skills --skill clean-code"
+      "supercent-io/skills-template --skill performance-optimization"
     )
     for skill_spec in "${COMMUNITY_SKILLS[@]}"; do
-      echo "   Installing: $skill_spec"
-      npx -y skills add $skill_spec -g -y 2>/dev/null && echo "   ✅ Done" || echo "   ⚠️  Failed"
+      skill_name=$(echo $skill_spec | awk '{print $NF}')
+      if [ ! -d "$AGENTS_SKILLS_DIR/$skill_name" ] || [ "$FORCE" = true ]; then
+        echo "   Installing: $skill_spec"
+        npx -y skills add $skill_spec -g -y 2>/dev/null && echo "   ✅ Done" || echo "   ⚠️  Failed"
+      else
+        echo "   ✅ $skill_name already installed"
+      fi
     done
 
-    # 2.3 Symlink to IDEs
-    link_skills() {
-      local dest_dir="$1"
-      local ide_name="$2"
-      echo "   🔗 Linking to $ide_name..."
-      mkdir -p "$(dirname "$dest_dir")"
-      rm -rf "$dest_dir" 2>/dev/null || true
-      ln -sfn "$AGENTS_SKILLS_DIR" "$dest_dir"
-    }
-
-    [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "antigravity" ]] && link_skills "$ANTIGRAVITY_SKILLS" "Antigravity"
-    [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "claude" ]] && link_skills "$CLAUDE_SKILLS" "Claude Code"
-    [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "windsurf" ]] && link_skills "$WINDSURF_SKILLS" "Windsurf"
+    [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "antigravity" ]] && safe_link "$AGENTS_SKILLS_DIR" "$ANTIGRAVITY_SKILLS" "Antigravity skills"
+    [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "claude" ]] && safe_link "$AGENTS_SKILLS_DIR" "$CLAUDE_SKILLS" "Claude Code skills"
+    [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "windsurf" ]] && safe_link "$AGENTS_SKILLS_DIR" "$WINDSURF_SKILLS" "Windsurf skills"
     echo ""
   fi
 
@@ -273,12 +256,7 @@ if [ "$ONLY_SKILLS" = true ]; then
     if [ -d "$TOOLKIT_DIR/skills" ]; then
       if [ -d ".git" ] || [ -d "$PROJECT_AGENT_DIR" ]; then
         mkdir -p "$PROJECT_AGENT_DIR/skills"
-        CORE_PROJECT_SKILLS=(
-          "skill-creator"
-          "llm-wiki-schema"
-          "llm-wiki-router"
-          "project-scanner"
-        )
+        CORE_PROJECT_SKILLS=("skill-creator" "llm-wiki-schema" "llm-wiki-router" "project-scanner")
         for target_skill in "${CORE_PROJECT_SKILLS[@]}"; do
           if [ -d "$TOOLKIT_DIR/skills/$target_skill" ]; then
             cp -r "${TOOLKIT_DIR}/skills/${target_skill%/}" "$PROJECT_AGENT_DIR/skills/" 2>/dev/null || true
@@ -292,84 +270,44 @@ if [ "$ONLY_SKILLS" = true ]; then
 fi
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Step 3: Workflows & Commands
+# Step 3: Workflows & Commands (Symlink Edition)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 if [ "$ONLY_WORKFLOWS" = true ]; then
-  echo "📋 Step 3: Installing workflows/commands"
+  echo "📋 Step 3: Global workflows (Symlinks)"
 
-  copy_wf() {
-    local dest="$1"
-    mkdir -p "$dest"
-    for wf in "$TOOLKIT_DIR/workflows"/*.md; do
-      local wf_name=$(basename "$wf")
-      local target="$dest/$wf_name"
-      if [ ! -f "$target" ] || [ "$FORCE" = true ]; then
-        cp "$wf" "$target" 2>/dev/null || true
-        echo "      ✅ $wf_name"
-      fi
-    done
-  }
-
-  # Antigravity (workflows)
-  if [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "antigravity" ]]; then
-    if [ "$SCOPE_MACHINE" = true ]; then
-      echo "   🌍 Antigravity Global → $ANTIGRAVITY_WORKFLOWS"
-      copy_wf "$ANTIGRAVITY_WORKFLOWS"
-    fi
-    if [ "$SCOPE_PROJECT" = true ]; then
-      if [ -d ".git" ] || [ -d "$PROJECT_AGENT_DIR" ]; then
-        echo "   📁 Antigravity Project → $PROJECT_AGENT_DIR/workflows"
-        copy_wf "$PROJECT_AGENT_DIR/workflows"
-      fi
-    fi
+  # Antigravity
+  if [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "antigravity" ]] && [ "$SCOPE_MACHINE" = true ]; then
+    safe_link "$AGENTS_WORKFLOWS_DIR" "$ANTIGRAVITY_WORKFLOWS" "Antigravity workflows"
   fi
 
-  # Claude Code (commands)
-  if [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "claude" ]]; then
-    if [ "$SCOPE_MACHINE" = true ]; then
-      echo "   🌍 Claude Global → $CLAUDE_COMMANDS"
-      copy_wf "$CLAUDE_COMMANDS"
-    fi
-    if [ "$SCOPE_PROJECT" = true ]; then
-      if [ -d ".git" ] || [ -d "$PROJECT_CLAUDE_DIR" ]; then
-        echo "   📁 Claude Project → $PROJECT_CLAUDE_DIR/commands (symlink to .agents/workflows)"
-        mkdir -p "$PROJECT_CLAUDE_DIR"
-        [ ! -L "$PROJECT_CLAUDE_DIR/commands" ] && rm -rf "$PROJECT_CLAUDE_DIR/commands" 2>/dev/null || true
-        ln -sfn ../.agents/workflows "$PROJECT_CLAUDE_DIR/commands"
-      fi
-    fi
+  # Claude Code
+  if [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "claude" ]] && [ "$SCOPE_MACHINE" = true ]; then
+    safe_link "$AGENTS_WORKFLOWS_DIR" "$CLAUDE_COMMANDS" "Claude Code commands"
   fi
 
-  # Windsurf (workflows)
-  if [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "windsurf" ]]; then
-    if [ "$SCOPE_MACHINE" = true ]; then
-      echo "   🌍 Windsurf Global → $WINDSURF_WORKFLOWS"
-      copy_wf "$WINDSURF_WORKFLOWS"
-    fi
-    if [ "$SCOPE_PROJECT" = true ]; then
-      if [ -d ".git" ] || [ -d "$PROJECT_WINDSURF_DIR" ]; then
-        echo "   📁 Windsurf Project → $PROJECT_WINDSURF_DIR/workflows (symlink to .agents/workflows)"
-        mkdir -p "$PROJECT_WINDSURF_DIR"
-        [ ! -L "$PROJECT_WINDSURF_DIR/workflows" ] && rm -rf "$PROJECT_WINDSURF_DIR/workflows" 2>/dev/null || true
-        ln -sfn ../.agents/workflows "$PROJECT_WINDSURF_DIR/workflows"
-      fi
-    fi
+  # Windsurf
+  if [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "windsurf" ]] && [ "$SCOPE_MACHINE" = true ]; then
+    safe_link "$AGENTS_WORKFLOWS_DIR" "$WINDSURF_WORKFLOWS" "Windsurf workflows"
   fi
-  
-  # 3b. Gitignore Injection for Multi-IDE cleanliness
+
   if [ "$SCOPE_PROJECT" = true ]; then
-    if [ -d ".git" ] && [ -f ".gitignore" ]; then
-      echo "   🛡️  Ensuring clean .gitignore for multi-IDE..."
-      if ! grep -q "settings.local.json" .gitignore; then
-        echo -e "\n# AI Agent Local Settings\n.claude/settings.local.json\n.claude/mcp.json\n.cursor/workspace.json\n.windsurf/workspace.json" >> .gitignore
-      fi
-      if grep -q -E "^\.(claude|windsurf|cursor|gemini)/?$" .gitignore; then
-        sed -i.bak -E '/^\.(claude|windsurf|cursor|gemini)\/?$/d' .gitignore && rm -f .gitignore.bak
-        echo "      ✅ Removed blanket IDE folder ignores"
-      fi
+    echo "📋 Step 3b: Project workflows"
+    if [ -d ".git" ] || [ -d "$PROJECT_AGENT_DIR" ]; then
+      mkdir -p "$PROJECT_AGENT_DIR/workflows"
+      cp -r "$TOOLKIT_DIR/workflows"/* "$PROJECT_AGENT_DIR/workflows/" 2>/dev/null || true
+      
+      # Project IDE symlinks to .agents/workflows
+      [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "claude" ]] && safe_link "../$PROJECT_AGENT_DIR/workflows" "$PROJECT_CLAUDE_DIR/commands" "Claude project commands"
+      [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "windsurf" ]] && safe_link "../$PROJECT_AGENT_DIR/workflows" "$PROJECT_WINDSURF_DIR/workflows" "Windsurf project workflows"
     fi
   fi
   
+  # Gitignore check
+  if [ "$SCOPE_PROJECT" = true ] && [ -d ".git" ] && [ -f ".gitignore" ]; then
+    if ! grep -q "settings.local.json" .gitignore; then
+      echo -e "\n# AI Agent Local Settings\n.claude/settings.local.json\n.claude/mcp.json\n.cursor/workspace.json\n.windsurf/workspace.json" >> .gitignore
+    fi
+  fi
   echo ""
 fi
 
@@ -377,33 +315,14 @@ fi
 # Step 4: Health Check
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 echo "🔍 Step 4: Health check"
-
-if [ "$SCOPE_MACHINE" = true ]; then
-  # Rules check
-  [[ -f "$ANTIGRAVITY_RULES" ]] && echo "   ✅ Antigravity rules exist" || echo "   ⚠️  Missing Antigravity rules"
-  [[ -f "$CLAUDE_RULES" ]] && echo "   ✅ Claude Code rules exist" || echo "   ⚠️  Missing Claude Code rules"
-  [[ -f "$CURSOR_RULES/user-rules.mdc" ]] && echo "   ✅ Cursor rules exist" || echo "   ⚠️  Missing Cursor rules"
-  [[ -f "$WINDSURF_RULES_GLOBAL" ]] && echo "   ✅ Windsurf rules exist" || echo "   ⚠️  Missing Windsurf rules"
-
-  # Reference rules check
-  [[ -f "$AGENTS_RULES_DIR/workflow-protocol.md" ]] && echo "   ✅ Workflow protocol reference exists" || echo "   ⚠️  Missing workflow-protocol.md"
-  [[ -f "$AGENTS_RULES_DIR/examples-violations.md" ]] && echo "   ✅ Examples reference exists" || echo "   ⚠️  Missing examples-violations.md"
-  
-  # Templates check
-  [[ -d "$AGENTS_TEMPLATES_DIR/domain-boilerplate" ]] && echo "   ✅ Domain boilerplate template exists (global)" || echo "   ⚠️  Missing domain boilerplate"
-fi
-
-if [ "$SCOPE_PROJECT" = true ]; then
-  # Skills check
-  if [ -d "$PROJECT_AGENT_DIR/skills" ]; then
-    count=$(find "$PROJECT_AGENT_DIR/skills" -type f | wc -l | tr -d ' ')
-    [[ $count -gt 50 ]] && echo "   ⚠️  Too many project skill files ($count)" || echo "   ✅ Project Skills: $count"
-  fi
-  # Templates check
-  [[ -d "$PROJECT_AGENT_DIR/templates/domain-boilerplate" ]] && echo "   ✅ Domain boilerplate template exists (project)" || echo "   ⚠️  Missing project domain boilerplate"
-fi
+for path in "$ANTIGRAVITY_RULES" "$CLAUDE_RULES" "$WINDSURF_RULES_GLOBAL" "$CURSOR_RULES/memory-rules.mdc"; do
+  [ -L "$path" ] && echo "   ✅ Rule link: $(basename $path)" || echo "   ⚠️  Missing/Invalid rule link: $(basename $path)"
+done
+for path in "$ANTIGRAVITY_WORKFLOWS" "$CLAUDE_COMMANDS" "$WINDSURF_WORKFLOWS"; do
+  [ -L "$path" ] && echo "   ✅ Workflow link: $(basename $path)" || echo "   ⚠️  Missing/Invalid workflow link: $(basename $path)"
+done
 
 echo ""
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-echo "✅ All done!"
+echo "✅ All done! (~/.agents is now your source of truth)"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"

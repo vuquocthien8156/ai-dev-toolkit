@@ -17,6 +17,7 @@ Before implementing:
 - If multiple interpretations exist, present them - don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
+- **Search Strategy: DO NOT blindly run global text searches across the entire project. Read the project's Master Wiki (`docs/index.md`) or architecture files first to understand module boundaries before executing targeted searches.**
 
 ### 2. Simplicity First
 
@@ -27,6 +28,8 @@ Before implementing:
 - No "flexibility" or "configurability" that wasn't requested.
 - No error handling for impossible scenarios.
 - If you write 200 lines and it could be 50, rewrite it.
+- **Strict Dependency Diet: Do not introduce new `package.json` dependencies unless explicitly approved. Use native TypeScript/JavaScript or existing utilities.**
+- **Do not reinvent the wheel: Always check `src/utils` or `src/shared` for existing helpers before creating new ones.**
 
 Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
 
@@ -35,6 +38,9 @@ Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, sim
 **Touch only what you must. Clean up only your own mess.**
 
 When editing existing code:
+- **NO PLACEHOLDERS: Never use comments like `// ... (existing code)` to shorten outputs. Always output the complete, fully functional code blocks needed for the change.**
+- **Safe Refactoring: Never delete error handling (`try/catch`), logging, or edge-case checks to make code look "cleaner". Preserve 100% of functional behavior.**
+- **Impact Radius: Before modifying any shared service, component, or utility, identify all internal callers/dependents to ensure you do not break other parts of the system.**
 - Don't "improve" adjacent code, comments, or formatting.
 - Don't refactor things that aren't broken.
 - Match existing style, even if you'd do it differently.
@@ -130,6 +136,13 @@ The test: Does your delegation prompt contain enough context to act without foll
 - Never write monolithic doc files.
 - Command the user to run `/docs` to initiate the documentation workflow.
 
+### 11. Technical Domain Rules (Lazy-Loading)
+If the project context involves specific technical stacks, proactively read the corresponding rules from `~/.agents/rules/` (Global) or `.agents/rules/` (Project):
+- **Backend (NestJS/Node.js):** `backend-rules.md`
+- **Frontend (Next.js/React):** `frontend-rules.md`
+- **Mobile (Expo/React Native):** `mobile-rules.md`
+- **Other protocols:** `workflow-protocol.md`, `examples-violations.md`
+
 ### 10. Bug & Rule Evolution
 
 **Share systemic lessons with the team.**
@@ -137,6 +150,22 @@ The test: Does your delegation prompt contain enough context to act without foll
 - When fixing a global, critical, or repeatable project bug, DO NOT just fix the code and move on.
 - Proactively ask the user: *"Should we update the project's rules or create a new Skill so other team members don't make the same mistake?"*
 - Propose creating a new skill (e.g., using `skill-creator`) if the pattern is complex and reusable.
+
+### 12. Context-Aware Skill Loading
+Proactively load these global skills from `~/.agents/skills/` when the context matches:
+
+| Trigger | Skill to Load |
+|---------|---------------|
+| Bug report, error trace, "not working" | `systematic-debugging` |
+| Writing or reviewing TypeScript | `typescript-mastery` |
+| Code review, PR review, `/review` | `code-review` |
+| Git commit, branch, PR, `/pr` | `git-workflow` |
+| Session > 15 messages, large outputs | `context-compression` |
+| Context feels stale or uncertain | `context-optimization` |
+| Refactoring or writing complex logic | `clean-code` |
+| Performance issues or auditing | `performance-optimization` |
+
+After loading a skill, briefly note: "📚 Loaded: <skill-name>".
 
 ---
 
