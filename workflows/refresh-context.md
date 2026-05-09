@@ -130,7 +130,9 @@ If scan finds a conflict (e.g. version mismatch), show BOTH values and ask user.
     - **7c. Main Index**: Generate `docs/INDEX.md` listing all modules and linking to their auto-generated READMEs and the compact `docs/core-utils.md` map.
 
 8. IMPORTANT: Self-Contained Architecture.
-    The project is designed to be 100% self-contained. ALL skills (including community skills) MUST be physically stored inside `.agents/skills/`. No external symlinks to `~/.agents/` are allowed.
+    Domain and project-specific skills MUST be physically stored inside `.agents/skills/` — self-contained and committed to Git.
+    Universal skills installed via `--machine` (e.g., `systematic-debugging`, `clean-code`) live in `~/.agents/skills/` and are accessed via IDE symlinks — this is by design and does NOT violate self-containment.
+    Rule: if a skill is domain-specific (NestJS, React, Expo) or project-specific (project-context, custom skills), it MUST be in `.agents/skills/`. If it is a universal debugging/meta skill, `~/.agents/skills/` is acceptable.
 
 9. Report summary to user:
     - Project type & Build command detected

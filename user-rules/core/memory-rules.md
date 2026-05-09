@@ -163,7 +163,6 @@ Proactively load these global skills from `~/.agents/skills/` when the context m
 | Session > 15 messages, large outputs | `context-compression` |
 | Context feels stale or uncertain | `context-optimization` |
 | Refactoring or writing complex logic | `clean-code` |
-| Performance issues or auditing | `performance-optimization` |
 
 After loading a skill, briefly note: "📚 Loaded: <skill-name>".
 

@@ -218,25 +218,43 @@ fi
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 # Step 2: Install and Symlink Skills
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# Detect tech stack from package.json in current directory
+detect_stack() {
+  local stacks=()
+  if [ -f "package.json" ]; then
+    grep -q '"@nestjs/core"' package.json && stacks+=("nestjs")
+    grep -q '"next"' package.json && stacks+=("nextjs")
+    grep -q '"expo"' package.json && stacks+=("expo")
+    grep -q '"react-native"' package.json && stacks+=("react-native")
+  fi
+  echo "${stacks[@]}"
+}
+
+# Install a community skill into a target directory (project-local)
+install_skill_local() {
+  local skill_spec="$1"
+  local target_dir="$2"
+  local skill_name
+  skill_name=$(echo "$skill_spec" | awk '{print $NF}')
+  if [ ! -d "$target_dir/$skill_name" ] || [ "$FORCE" = true ]; then
+    echo "   Installing: $skill_name"
+    (cd "$target_dir" && npx -y skills add $skill_spec -y 2>/dev/null) && echo "   ✅ Done" || echo "   ⚠️  Failed"
+  else
+    echo "   ✅ $skill_name already installed"
+  fi
+}
+
 if [ "$ONLY_SKILLS" = true ]; then
   if [ "$SCOPE_MACHINE" = true ]; then
-    echo "📦 Step 2a: Linking global skills"
-    # Community skills (only install if missing or force)
-    echo "🌐 Step 2a.1: Community skills"
-    COMMUNITY_SKILLS=(
+    echo "📦 Step 2a: Global universal skills (~/.agents/skills/)"
+    # Only universal skills belong in global — domain skills go into each project
+    UNIVERSAL_SKILLS=(
       "obra/superpowers --skill systematic-debugging"
-      "akillness/oh-my-skills --skill backend-testing"
-      "sickn33/antigravity-awesome-skills --skill api-security-best-practices"
-      "kadajett/agent-nestjs-skills --skill nestjs-best-practices"
-      "vercel-labs/agent-skills --skill vercel-react-best-practices"
-      "vercel-labs/agent-skills --skill vercel-react-native-skills"
-      "expo/skills --skill upgrading-expo"
-      "expo/skills --skill expo-deployment"
       "sickn33/antigravity-awesome-skills --skill clean-code"
-      "supercent-io/skills-template --skill performance-optimization"
     )
-    for skill_spec in "${COMMUNITY_SKILLS[@]}"; do
-      skill_name=$(echo $skill_spec | awk '{print $NF}')
+    for skill_spec in "${UNIVERSAL_SKILLS[@]}"; do
+      skill_name=$(echo "$skill_spec" | awk '{print $NF}')
       if [ ! -d "$AGENTS_SKILLS_DIR/$skill_name" ] || [ "$FORCE" = true ]; then
         echo "   Installing: $skill_spec"
         npx -y skills add $skill_spec -g -y 2>/dev/null && echo "   ✅ Done" || echo "   ⚠️  Failed"
@@ -252,18 +270,67 @@ if [ "$ONLY_SKILLS" = true ]; then
   fi
 
   if [ "$SCOPE_PROJECT" = true ]; then
-    echo "📦 Step 2b: Installing project skills"
-    if [ -d "$TOOLKIT_DIR/skills" ]; then
-      if [ -d ".git" ] || [ -d "$PROJECT_AGENT_DIR" ]; then
-        mkdir -p "$PROJECT_AGENT_DIR/skills"
-        CORE_PROJECT_SKILLS=("skill-creator" "llm-wiki-schema" "llm-wiki-router" "project-scanner")
-        for target_skill in "${CORE_PROJECT_SKILLS[@]}"; do
-          if [ -d "$TOOLKIT_DIR/skills/$target_skill" ]; then
-            cp -r "${TOOLKIT_DIR}/skills/${target_skill%/}" "$PROJECT_AGENT_DIR/skills/" 2>/dev/null || true
-            echo "   ✅ $target_skill (project)"
-          fi
+    echo "📦 Step 2b: Project skills (.agents/skills/)"
+    if [ -d ".git" ] || [ -d "$PROJECT_AGENT_DIR" ]; then
+      mkdir -p "$PROJECT_AGENT_DIR/skills"
+
+      # 1. Copy all bundled toolkit skills (universal, written by this toolkit)
+      if [ -d "$TOOLKIT_DIR/skills" ]; then
+        for skill_dir in "$TOOLKIT_DIR/skills"/*/; do
+          skill_name=$(basename "$skill_dir")
+          cp -r "$skill_dir" "$PROJECT_AGENT_DIR/skills/" 2>/dev/null || true
+          echo "   ✅ $skill_name (bundled)"
         done
       fi
+
+      # 2. Auto-detect stack and install domain-specific community skills
+      DETECTED_STACKS=$(detect_stack)
+      echo "   🔍 Detected stacks: ${DETECTED_STACKS:-none}"
+
+      DOMAIN_SKILLS_BE=(
+        "kadajett/agent-nestjs-skills --skill nestjs-architecture"
+        "kadajett/agent-nestjs-skills --skill nestjs-security"
+        "kadajett/agent-nestjs-skills --skill nestjs-data"
+        "kadajett/agent-nestjs-skills --skill nestjs-api"
+        "akillness/oh-my-skills --skill backend-testing"
+        "sickn33/antigravity-awesome-skills --skill api-security-best-practices"
+      )
+      DOMAIN_SKILLS_FE=(
+        "vercel-labs/agent-skills --skill vercel-react-best-practices"
+      )
+      DOMAIN_SKILLS_MOBILE=(
+        "vercel-labs/agent-skills --skill vercel-react-native-skills"
+        "expo/skills --skill upgrading-expo"
+        "expo/skills --skill expo-deployment"
+      )
+
+      for stack in $DETECTED_STACKS; do
+        case "$stack" in
+          nestjs)
+            echo "   📦 Installing NestJS domain skills..."
+            for skill_spec in "${DOMAIN_SKILLS_BE[@]}"; do
+              install_skill_local "$skill_spec" "$PROJECT_AGENT_DIR/skills"
+            done
+            ;;
+          nextjs)
+            echo "   📦 Installing Next.js domain skills..."
+            for skill_spec in "${DOMAIN_SKILLS_FE[@]}"; do
+              install_skill_local "$skill_spec" "$PROJECT_AGENT_DIR/skills"
+            done
+            ;;
+          expo|react-native)
+            echo "   📦 Installing Mobile domain skills..."
+            for skill_spec in "${DOMAIN_SKILLS_MOBILE[@]}"; do
+              install_skill_local "$skill_spec" "$PROJECT_AGENT_DIR/skills"
+            done
+            ;;
+        esac
+      done
+
+      # 3. Create IDE symlinks pointing to .agents/skills (project-local)
+      [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "antigravity" ]] && safe_link "../$PROJECT_AGENT_DIR/skills" ".gemini/antigravity/skills" "Antigravity project skills"
+      [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "claude" ]] && safe_link "../$PROJECT_AGENT_DIR/skills" "$PROJECT_CLAUDE_DIR/skills" "Claude project skills"
+      [[ "$TARGET_IDE" == "all" || "$TARGET_IDE" == "windsurf" ]] && safe_link "../$PROJECT_AGENT_DIR/skills" "$PROJECT_WINDSURF_DIR/skills" "Windsurf project skills"
     fi
     echo ""
   fi
