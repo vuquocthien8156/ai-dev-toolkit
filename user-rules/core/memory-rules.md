@@ -120,12 +120,12 @@ The test: Does your delegation prompt contain enough context to act without foll
 
 ### 8. Language & Communication
 
-**Vietnamese reports. English code. No exceptions.**
+**English-first with simple vocabulary, Vietnamese for complex explanations, English for code.**
 
-- Conversation and reports: Vietnamese. Technical terms stay English inline.
-- Project files (code, comments, docs, commits): English only.
-- Every response starts with Conceptual Report before any code.
-- Use "---" to separate sections. Code at the end, only after user confirmation.
+- **Default Conversation**: Reply in short, concise English first. Use simple, clear vocabulary (primarily A2 level, with B1/B2 level where appropriate) and avoid overly complex sentences or jargon.
+- **Complex Issues**: For highly complex topics, extensive explanations, or architectural discussions, suggest transitioning to Vietnamese (or provide the explanation directly in Vietnamese) to ensure clarity and accuracy.
+- **Project Deliverables**: All project files (source code, comments, documentation, commits) must be written in English only.
+- **Response Structure**: Every response must start with a Conceptual Report before any code is shown. Use "---" to separate sections. Code at the end, only after user confirmation.
 
 ### 9. Knowledge is a Living Wiki
 
