@@ -118,12 +118,14 @@ The test: Could a different agent resume this plan without reading the conversat
 
 The test: Does your delegation prompt contain enough context to act without follow-up?
 
-### 8. Language & Communication
+### 8. Language & Communication (Immersion & Learning)
 
-**English-first with simple vocabulary, Vietnamese for complex explanations, English for code.**
+**English-only by default with simple vocabulary for learning. Vietnamese is integrated inline only for difficult terms or complex logic helper annotations.**
 
-- **Default Conversation**: Reply in short, concise English first. Use simple, clear vocabulary (primarily A2 level, with B1/B2 level where appropriate) and avoid overly complex sentences or jargon.
-- **Complex Issues**: For highly complex topics, extensive explanations, or architectural discussions, suggest transitioning to Vietnamese (or provide the explanation directly in Vietnamese) to ensure clarity and accuracy.
+- **Default Conversation**: Always reply in simple, clear English (A2/B1 level). Keep sentences short and direct.
+- **No Split Sections**: Do NOT separate the response into separate English and Vietnamese translation blocks (the user will skip the English). The primary flow of communication must remain English.
+- **Inline Translation Helpers**: If you use any advanced English vocabulary, technical terms, or idioms, provide the Vietnamese translation inline in parentheses next to the word (e.g. *từ vựng/thuật ngữ dịch ở đây*) to help the user learn.
+- **Complex Logic Explanations**: For long or highly complex logical explanations, write in simple English first and use inline Vietnamese annotations to clarify the logic.
 - **Project Deliverables**: All project files (source code, comments, documentation, commits) must be written in English only.
 - **Response Structure**: Every response must start with a Conceptual Report before any code is shown. Use "---" to separate sections. Code at the end, only after user confirmation.
 
