@@ -1,6 +1,6 @@
 # Toolkit install plan v1
 
-Written 2026-10-18. Supersedes the layout and "Remove user-rules" rows in `HANDOFF.md`.
+Written 2026-10-18. Replaces the earlier `HANDOFF.md` notes (local only, not in the repo).
 A new session can resume from this file alone.
 
 ## Goal
@@ -64,8 +64,8 @@ ai-dev-toolkit/
   Clean machine leftovers (`~/.agents/workflows`, `~/.agents/templates`, `~/.agents/user-rules`,
   old `.bak` files, `~/dotfiles/claude-setup`, broken `~/.cursor/rules/*.mdc` links). Ask before each delete.
 - **Phase 3 (content)**: make `core/AGENTS.md` tool-neutral and shorter (it mentions plan mode, `/docs`,
-  Claude-only habits). Review technical rules. Add `skills.txt` (pinned upstream skills) and
-  `SOURCES.md` (borrowed ideas with links).
+  Claude-only habits). Review technical rules. Add `SOURCES.md` (borrowed ideas with links).
+  `skills.txt` was done early (2026-10-18, archify only); filling it is in Next steps.
 
 ## Learning from other repos
 
@@ -81,9 +81,29 @@ Project-specific skills live in that project's repo, not here.
 
 - `@~/` imports in `CLAUDE.md` load in practice (check with `/memory` after restart).
 - Codex reads `~/.agents/skills` natively.
+- Whether Antigravity reads `~/.agents/skills`. On the owner's Mac, `~/.gemini/antigravity/skills` links to
+  `~/.gemini/config/skills`, which holds its own copy of archify (not managed by `install.sh`).
 - Whether Antigravity supports imports in `GEMINI.md`.
 - Old `~/.cursor/rules/*.mdc` symlinks point into `~/.agents/rules/{core,technical}` and break
   once `~/.agents/rules` becomes a symlink (Cursor is out of scope).
+
+## Next steps (in order)
+
+1. Push `chore/slim-toolkit` (owner approves each push).
+2. Second device: clone, `./install.sh --with-skills`, restart, check `/memory` (core import loads)
+   and `/agents` (Haiku agents). Note what is missing.
+3. Personal skills: design where they live in the repo (for example `skills/<name>/SKILL.md`, kept
+   flat) and how `install.sh` links them into `~/.agents/skills`. Owner approves the design first.
+   Move the 27 skills (see Progress log), drop the ones not used. Must finish before Phase 2.
+4. Trim the ~35 upstream skills installed on the owner's Mac (`~/.agents/.skill-lock.json`, 11 entries
+   stale): keep only what is used, pin each in `skills.txt`.
+5. Phase 2 (repo and machine cleanup, see Phases).
+6. Phase 3 (content, see Phases).
+
+## Open decisions (owner)
+
+- Jev: keep `--with-jev` or drop it (recommendation: drop).
+- Where `biner`, `notion-format` and `markdown-document-structurer` came from (upstream or own).
 
 ## Progress log
 

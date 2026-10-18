@@ -104,7 +104,20 @@ Missing tools are not fatal, except `jq` for the Claude step:
    ./install.sh
    ```
 
+   Or, to also install the skills in `skills.txt` (needs Node.js and network):
+
+   ```bash
+   ./install.sh --with-skills
+   ```
+
 4. Do the [After install](#after-install) steps.
+
+What a new machine does **not** get yet:
+
+- Personal skills (`code-review`, `typescript-mastery`, `verify`, `debug`, ...). `core/AGENTS.md`
+  names them, but they are not in `skills.txt` yet, so the agent cannot load them there.
+- Other upstream skills, unless they are in `skills.txt`.
+- Plugins, MCP servers, hooks. Install them by hand if you need them.
 
 Important: keep the clone where it is. The core rules are **symlinks** into this folder.
 If you move or delete the folder, the links break. If you move it, run `./install.sh` again.
