@@ -100,3 +100,7 @@ Project-specific skills live in that project's repo, not here.
   step-by-step walkthrough, backups/restore, Jev guide, uninstall, troubleshooting). `install.sh`
   messages now print exact install commands; `--with-jev` checks Node 22+ and the Claude step up front.
   Re-tested: fake HOME (empty, all tools, run twice), jev guards, Alpine container (no jq, run twice).
+- 2026-10-18: real-Mac run done (backup `~/.agents/backups/20261018-202727-17257`). `CLAUDE.md` is now the
+  managed block only; rtk removed (hook in `~/.claude/settings.json`, `~/.codex/hooks.json`, `~/.claude/RTK.md`
+  moved to backup; rtk binary still installed). Re-run: all `ok:`. Cursor/Windsurf dropped by the owner
+  (their links are now broken; clean up in Phase 2). Branch pushed. Import not yet confirmed with `/memory`.
