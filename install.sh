@@ -6,11 +6,14 @@
 #   claude       ~/.claude/CLAUDE.md managed block, settings.json model keys, Haiku helper agents
 #   codex        ~/.codex/AGENTS.md -> ~/.agents/AGENTS.md (symlink)
 #   antigravity  ~/.gemini/GEMINI.md -> ~/.agents/AGENTS.md (symlink)
+#   skills       only with --with-skills: upstream skills pinned in skills.txt
 #
-# Usage: ./install.sh [--claude] [--codex] [--antigravity] [--with-jev] [-h|--help]
+# Usage: ./install.sh [--claude] [--codex] [--antigravity] [--with-skills] [--with-jev] [-h|--help]
 #   (no target flag)  install every tool whose config dir exists (~/.claude, ~/.codex, ~/.gemini)
 #   --claude --codex --antigravity
 #                     install only the tools you name (core is always installed)
+#   --with-skills     also install the skills listed in skills.txt for the selected tools.
+#                     Needs Node.js and network; downloads third-party code. See README "Skills".
 #   --with-jev        Claude step only, experimental: also install jev-router, a third-party
 #                     model router. Needs Node.js 22+ and a Jev key. See README "Optional: Jev".
 #
@@ -18,12 +21,13 @@
 # ~/.agents/backups/<stamp>/ first (nothing is deleted).
 set -euo pipefail
 
-DO_CLAUDE=0; DO_CODEX=0; DO_ANTIGRAVITY=0; WITH_JEV=0; PICKED=0
+DO_CLAUDE=0; DO_CODEX=0; DO_ANTIGRAVITY=0; WITH_SKILLS=0; WITH_JEV=0; PICKED=0
 for arg in "$@"; do
   case "$arg" in
     --claude) DO_CLAUDE=1; PICKED=1 ;;
     --codex) DO_CODEX=1; PICKED=1 ;;
     --antigravity) DO_ANTIGRAVITY=1; PICKED=1 ;;
+    --with-skills) WITH_SKILLS=1 ;;
     --with-jev) WITH_JEV=1 ;;
     -h|--help) awk 'NR>1 && /^#/{sub(/^# ?/, ""); print; next} NR>1{exit}' "$0"; exit 0 ;;
     *) echo "Unknown option: $arg (see ./install.sh --help)" >&2; exit 1 ;;
@@ -39,6 +43,7 @@ SRC="$(cd "$(dirname "$0")" && pwd)"
 CORE="$HOME/.agents/AGENTS.md"
 BACKUP_DIR="$HOME/.agents/backups/$(date +%Y%m%d-%H%M%S)-$$"
 JEV_ROUTER_VERSION="1.6.0"
+SKILLS_CLI_VERSION="1.5.18"
 # The sonnet alias resolves to Sonnet 5.5 only from this CLI version (agents pin the Haiku ID).
 MIN_CLI="2.1.284"
 TMP="$(mktemp)"
@@ -49,6 +54,16 @@ if [ "$DO_CLAUDE" = 1 ] && ! command -v jq >/dev/null; then
   echo "jq is required for the Claude step. Install it with: brew install jq" >&2
   echo "(No Homebrew? See README: Prerequisites.) Or run without the Claude step: ./install.sh --codex --antigravity" >&2
   exit 1
+fi
+if [ "$WITH_SKILLS" = 1 ]; then
+  if [ "$DO_CLAUDE$DO_CODEX$DO_ANTIGRAVITY" = 000 ]; then
+    echo "--with-skills needs at least one tool (no ~/.claude, ~/.codex or ~/.gemini found, and no tool flag given)." >&2
+    exit 1
+  fi
+  if ! command -v npx >/dev/null; then
+    echo "--with-skills needs Node.js (npx). Install it with: brew install node" >&2
+    exit 1
+  fi
 fi
 if [ "$WITH_JEV" = 1 ]; then
   if [ "$DO_CLAUDE" = 0 ]; then
@@ -158,10 +173,35 @@ install_antigravity() {
   link "$CORE" "$HOME/.gemini/GEMINI.md"
 }
 
+# Skills from skills.txt. The skills CLI keeps one copy in ~/.agents/skills and links it into each
+# selected tool's skills folder. An installed skill is skipped, so re-runs work offline.
+install_skills() {
+  echo "== skills"
+  local src name rest agents=()
+  if [ "$DO_CLAUDE" = 1 ]; then agents+=(-a claude-code); fi
+  if [ "$DO_CODEX" = 1 ]; then agents+=(-a codex); fi
+  if [ "$DO_ANTIGRAVITY" = 1 ]; then agents+=(-a antigravity); fi
+  while read -r src name rest; do
+    case "$src" in ''|'#'*) continue ;; esac
+    if [ -z "$name" ]; then echo "skills.txt: missing skill name after '$src'" >&2; exit 1; fi
+    if [ -e "$HOME/.agents/skills/$name" ]; then echo "ok:      $HOME/.agents/skills/$name"; continue; fi
+    # stdin from /dev/null: npx must not eat the rest of skills.txt.
+    DO_NOT_TRACK=1 npm_config_update_notifier=false npx --yes "skills@$SKILLS_CLI_VERSION" add "$src" -g -s "$name" "${agents[@]}" -y </dev/null
+    if [ ! -e "$HOME/.agents/skills/$name" ]; then
+      echo "Skill '$name' was not installed from $src (check the tag and the name in skills.txt)." >&2
+      exit 1
+    fi
+    echo "added:   $HOME/.agents/skills/$name ($src)"
+  done < "$SRC/skills.txt"
+}
+
 install_core
+# Create the shared skills dir first, so the Claude step links ~/.claude/skills to it as a whole.
+if [ "$WITH_SKILLS" = 1 ]; then mkdir -p "$HOME/.agents/skills"; fi
 if [ "$DO_CLAUDE" = 1 ]; then install_claude; fi
 if [ "$DO_CODEX" = 1 ]; then install_codex; fi
 if [ "$DO_ANTIGRAVITY" = 1 ]; then install_antigravity; fi
+if [ "$WITH_SKILLS" = 1 ]; then install_skills; fi
 
 echo
 if [ -d "$BACKUP_DIR" ]; then echo "Backups: $BACKUP_DIR"; fi

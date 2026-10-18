@@ -104,3 +104,13 @@ Project-specific skills live in that project's repo, not here.
   managed block only; rtk removed (hook in `~/.claude/settings.json`, `~/.codex/hooks.json`, `~/.claude/RTK.md`
   moved to backup; rtk binary still installed). Re-run: all `ok:`. Cursor/Windsurf dropped by the owner
   (their links are now broken; clean up in Phase 2). Branch pushed. Import not yet confirmed with `/memory`.
+- 2026-10-18: `skills.txt` + `install.sh --with-skills` (archify only, pinned `tt-a1i/archify#v3.1.0`,
+  `skills` CLI pinned to 1.5.18, telemetry off). Tested in fake HOME: empty (run twice, second run all `ok:`),
+  Mac-like with `~/.claude/skills -> ~/.agents/skills` (no self-loop, other skills untouched), no tool and
+  no npx guards (stop before any change), remove + reinstall, no-flag run unchanged. Not run on the real Mac.
+- Claude Code facts (docs, 2026-10-18): native `AGENTS.md` is project-scoped only (v2.1.277+), loads only
+  when the project has no `CLAUDE.md` (default), never reads `~/.agents/`. Claude skills dirs do not include
+  `~/.agents/skills`, so the `~/.claude/skills` link stays. Keep the global `@~/.agents/AGENTS.md` import.
+- Blocker for Phase 2: 27 personal skills on disk are not in the skills lock (from repo `skills/`,
+  `workflows/`, and unknown: `biner`, `notion-format`, `markdown-document-structurer`). Move them into the
+  repo before deleting `skills/` or `workflows/`.

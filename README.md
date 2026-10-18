@@ -22,6 +22,7 @@ Anything that can be installed from upstream (community skills, plugins) is **no
 - [After install](#after-install)
 - [Updating](#updating)
 - [Backups and restore](#backups-and-restore)
+- [Skills](#skills)
 - [Optional: Jev](#optional-jev)
 - [What is not installed](#what-is-not-installed)
 - [Uninstall](#uninstall)
@@ -50,7 +51,7 @@ Supported: macOS and Linux (bash and symlinks). Windows is not supported.
 | jq | Claude step edits `settings.json` | `jq --version` | `brew install jq` |
 | Claude Code 2.1.284+ | the `sonnet` alias maps to Sonnet 5.5 from this version | `claude --version` | see below |
 | ripgrep, fd, bat, ast-grep | used by the Haiku helper agents and the routing rules | `rg --version` | `brew install ripgrep fd bat ast-grep` |
-| Node.js 22+ | only for `--with-jev` | `node --version` | `brew install node` |
+| Node.js | only for `--with-skills` (any recent version) and `--with-jev` (22+) | `node --version` | `brew install node` |
 
 Install Homebrew (if `brew` is not found):
 
@@ -111,7 +112,7 @@ If you move or delete the folder, the links break. If you move it, run `./instal
 ## Options
 
 ```
-./install.sh [--claude] [--codex] [--antigravity] [--with-jev] [-h|--help]
+./install.sh [--claude] [--codex] [--antigravity] [--with-skills] [--with-jev] [-h|--help]
 ```
 
 | Option | Effect |
@@ -120,6 +121,7 @@ If you move or delete the folder, the links break. If you move it, run `./instal
 | `--claude` | core + Claude Code only |
 | `--codex` | core + Codex only |
 | `--antigravity` | core + Antigravity only |
+| `--with-skills` | also install the skills in `skills.txt` for the selected tools (see [Skills](#skills)) |
 | `--with-jev` | with the Claude step: also install jev-router (see [Optional: Jev](#optional-jev)) |
 | `-h`, `--help` | show help |
 
@@ -134,6 +136,7 @@ You do not need to read the script. This is everything it does, in order.
 
 - Reads the options and picks the tools to install.
 - If the Claude step will run and `jq` is missing: stops with an error.
+- If `--with-skills` is given but no tool is selected, or `npx` (Node.js) is missing: stops with an error.
 - If `--with-jev` is given but the Claude step will not run, or Node.js 22+ is missing: stops with an error.
 
 **1. Core (always)**
@@ -166,6 +169,11 @@ You do not need to read the script. This is everything it does, in order.
    Your own lines outside the block are kept. An old block is replaced, never duplicated.
    If `CLAUDE.md` still holds a full copy of the core rules, it prints a warning:
    delete that copy by hand, because the block already imports it.
+
+   Why an import and not `AGENTS.md`: Claude Code (2.1.277+) reads `AGENTS.md` natively, but only
+   inside a project (the working folder and its parents), and by default only when that project has
+   no `CLAUDE.md`. It never reads files under `~/.agents/`. So the global rules need this import.
+   A project repo can still ship just an `AGENTS.md`, and Claude, Codex and Antigravity all read it.
 5. `~/.claude/skills`: if it does not exist and `~/.agents/skills` exists, links it there,
    so Claude Code sees the same skills as the other tools. An existing `~/.claude/skills` is not touched.
 6. Only with `--with-jev`: runs the jev-router setup (see [Optional: Jev](#optional-jev)).
@@ -181,7 +189,21 @@ and you also write to them.
 
 - Link `~/.gemini/GEMINI.md` -> `~/.agents/AGENTS.md`.
 
-**5. Summary**
+**5. Skills** (only with `--with-skills`)
+
+- For each line in `skills.txt`, runs the pinned `skills` CLI:
+  `npx skills@1.5.18 add <owner>/<repo>#<tag> -g -s <name> -a <tools> -y`.
+- The CLI keeps one copy in `~/.agents/skills/<name>`. It counts Codex and Antigravity as reading
+  that folder directly (not yet checked in those tools). Claude Code sees it through the
+  `~/.claude/skills` link from step 2.5 (the script creates `~/.agents/skills` first, so the link is
+  made on a new machine too). Only if `~/.claude/skills` is already a real folder does the CLI add a
+  per-skill link inside it.
+- The script stops with an error if a skill is not in `~/.agents/skills/` after the CLI ran
+  (wrong tag or name), or if a line in `skills.txt` has no skill name.
+- A skill that is already in `~/.agents/skills/` is skipped (`ok:`), so a re-run needs no network.
+- Telemetry of the `skills` CLI is turned off (`DO_NOT_TRACK=1`).
+
+**6. Summary**
 
 - Prints the backup folder (only if something was backed up) and the next steps.
 
@@ -200,6 +222,7 @@ and you also write to them.
 | `ok:` | already correct, nothing changed |
 | `linked:` | a symlink was created |
 | `updated:` | a file was written |
+| `added:` | a skill from `skills.txt` was installed |
 | `  backup:` | the old version was saved here first |
 | `WARNING:` | something is missing; the install continues |
 
@@ -247,6 +270,44 @@ rm ~/.codex/AGENTS.md && mv ~/.agents/backups/<stamp>/.codex/AGENTS.md ~/.codex/
 
 `rm` on a symlink removes only the link, not the file it points to.
 Backups are never cleaned up automatically. Delete old ones by hand when you are sure.
+
+## Skills
+
+`skills.txt` lists upstream skills, pinned to a git tag so every machine gets the same version:
+
+```
+tt-a1i/archify#v3.1.0 archify
+```
+
+Install them (with the tools you use):
+
+```bash
+./install.sh --with-skills
+```
+
+Read this first:
+
+- Skills are third-party code and run with full agent permissions. Read a skill before you add it.
+- Some skills call the network themselves (for example archify checks for its own updates).
+
+Add a skill: find its repo and latest tag, add one line `<owner>/<repo>#<tag> <skill-name>`,
+then run `./install.sh --with-skills`. List the skills in a repo with:
+
+```bash
+npx skills add <owner>/<repo> --list
+```
+
+Upgrade a skill: change its tag in `skills.txt`, remove the old copy, then install again:
+
+```bash
+npx skills remove <skill-name> -g -y
+```
+
+```bash
+./install.sh --with-skills
+```
+
+Skills you wrote yourself are not in `skills.txt` yet (planned, see `docs/plans/`).
 
 ## Optional: Jev
 
@@ -318,10 +379,9 @@ Then check that `ANTHROPIC_BASE_URL` is gone from `~/.claude/settings.json`.
 ## What is not installed
 
 - The AI apps themselves (Claude Code, Codex, Antigravity). Install them first.
-- Skills. `~/.agents/skills` is only linked for Claude if it already exists.
-  Rule 12 in `core/AGENTS.md` names skills (`systematic-debugging`, `code-review`, ...);
-  on a new machine install them yourself, for example `npx skills add <owner>/<repo> --skill <name>`.
-  A pinned `skills.txt` is planned (Phase 3).
+- Skills, unless you pass `--with-skills`, and then only the ones in `skills.txt`.
+  Rule 12 in `core/AGENTS.md` names personal skills (`code-review`, `typescript-mastery`, ...)
+  that are not in `skills.txt` yet; moving them into this repo is planned.
 - Plugins, MCP servers, hooks, status line.
 - Cursor and Windsurf. Old links from `~/.cursor/rules/*.mdc` and `~/.windsurfrules` into
   `~/.agents/rules/core/...` break once `~/.agents/rules` points to this repo (flat layout).
@@ -337,7 +397,8 @@ Then check that `ANTHROPIC_BASE_URL` is gone from `~/.claude/settings.json`.
 2. Claude: delete the lines from `<!-- claude-setup:begin -->` to `<!-- claude-setup:end -->` in
    `~/.claude/CLAUDE.md`, and delete `~/.claude/agents/{Explore,search,grep,docs}.md`.
 3. Claude `settings.json`: remove the 3 keys by hand, or restore it from a backup.
-4. Put back old files from `~/.agents/backups/<stamp>/` if you want (see [Backups and restore](#backups-and-restore)).
+4. Skills: `npx skills remove <skill-name> -g -y` for each line in `skills.txt`.
+5. Put back old files from `~/.agents/backups/<stamp>/` if you want (see [Backups and restore](#backups-and-restore)).
 
 ## Security notes
 
@@ -354,6 +415,9 @@ Then check that `ANTHROPIC_BASE_URL` is gone from `~/.claude/settings.json`.
 | `jq is required for the Claude step` | `brew install jq`, or run `./install.sh --codex --antigravity` |
 | `WARNING: claude CLI not found` | install Claude Code (see [Prerequisites](#prerequisites)) |
 | `Claude Code X is older than 2.1.284` | `claude update` (Homebrew: `brew upgrade claude-code`) |
+| `--with-skills needs Node.js (npx)` | `brew install node` |
+| `--with-skills needs at least one tool` | add `--claude`, `--codex` or `--antigravity` |
+| A skill did not update after you changed its tag | it is skipped while installed; see [Skills](#skills) |
 | `--with-jev needs Node.js 22 or newer` | `brew install node` |
 | `--with-jev needs the Claude step` | add `--claude`, or install Claude Code first |
 | A tool was skipped | its config folder does not exist; open the tool once, or pass its flag |
@@ -367,6 +431,7 @@ Then check that `ANTHROPIC_BASE_URL` is gone from `~/.claude/settings.json`.
 ```
 ai-dev-toolkit/
 ├── install.sh                 the installer
+├── skills.txt                 pinned upstream skills (--with-skills)
 ├── core/
 │   ├── AGENTS.md              general rules (all tools)
 │   └── rules/                 backend, frontend, mobile, workflow-protocol, examples-violations
