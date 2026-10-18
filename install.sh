@@ -1,13 +1,21 @@
 #!/usr/bin/env bash
-# ai-dev-toolkit installer. Safe to re-run.
+# ai-dev-toolkit installer. Safe to re-run. Full guide: README.md
+#
+# What it installs:
 #   core         ~/.agents/AGENTS.md and ~/.agents/rules -> this repo (symlinks, always installed)
 #   claude       ~/.claude/CLAUDE.md managed block, settings.json model keys, Haiku helper agents
 #   codex        ~/.codex/AGENTS.md -> ~/.agents/AGENTS.md (symlink)
 #   antigravity  ~/.gemini/GEMINI.md -> ~/.agents/AGENTS.md (symlink)
-# Usage: ./install.sh [--claude] [--codex] [--antigravity] [--with-jev]
-#   No target flag: install every tool whose config dir exists (~/.claude, ~/.codex, ~/.gemini).
-#   --with-jev  Claude step only: also install jev-router (third-party proxy; needs TYPESAFE_API_KEY).
-# Files that change are backed up to ~/.agents/backups/<stamp>/ first.
+#
+# Usage: ./install.sh [--claude] [--codex] [--antigravity] [--with-jev] [-h|--help]
+#   (no target flag)  install every tool whose config dir exists (~/.claude, ~/.codex, ~/.gemini)
+#   --claude --codex --antigravity
+#                     install only the tools you name (core is always installed)
+#   --with-jev        Claude step only, experimental: also install jev-router, a third-party
+#                     model router. Needs Node.js 22+ and a Jev key. See README "Optional: Jev".
+#
+# Requires: bash; jq for the Claude step. Files that change are backed up to
+# ~/.agents/backups/<stamp>/ first (nothing is deleted).
 set -euo pipefail
 
 DO_CLAUDE=0; DO_CODEX=0; DO_ANTIGRAVITY=0; WITH_JEV=0; PICKED=0
@@ -17,8 +25,8 @@ for arg in "$@"; do
     --codex) DO_CODEX=1; PICKED=1 ;;
     --antigravity) DO_ANTIGRAVITY=1; PICKED=1 ;;
     --with-jev) WITH_JEV=1 ;;
-    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
-    *) echo "Unknown option: $arg" >&2; exit 1 ;;
+    -h|--help) awk 'NR>1 && /^#/{sub(/^# ?/, ""); print; next} NR>1{exit}' "$0"; exit 0 ;;
+    *) echo "Unknown option: $arg (see ./install.sh --help)" >&2; exit 1 ;;
   esac
 done
 if [ "$PICKED" = 0 ]; then
@@ -36,10 +44,21 @@ MIN_CLI="2.1.284"
 TMP="$(mktemp)"
 trap 'rm -f "$TMP"' EXIT
 
-# Fail before touching anything when the Claude step cannot run.
+# Fail before touching anything when a requested step cannot run.
 if [ "$DO_CLAUDE" = 1 ] && ! command -v jq >/dev/null; then
-  echo "jq is required for the Claude step (brew install jq), or run without --claude." >&2
+  echo "jq is required for the Claude step. Install it with: brew install jq" >&2
+  echo "(No Homebrew? See README: Prerequisites.) Or run without the Claude step: ./install.sh --codex --antigravity" >&2
   exit 1
+fi
+if [ "$WITH_JEV" = 1 ]; then
+  if [ "$DO_CLAUDE" = 0 ]; then
+    echo "--with-jev needs the Claude step (~/.claude not found and --claude not given)." >&2
+    exit 1
+  fi
+  if ! command -v npx >/dev/null || [ "$(node -p 'process.versions.node.split(".")[0]' 2>/dev/null || echo 0)" -lt 22 ]; then
+    echo "--with-jev needs Node.js 22 or newer. Install it with: brew install node" >&2
+    exit 1
+  fi
 fi
 
 # backup cp|mv <path>: copy the path, or move it away, into $BACKUP_DIR (keeps its path under $HOME).
@@ -76,18 +95,19 @@ install_core() {
 
 install_claude() {
   echo "== claude"
-  local dir="$HOME/.claude" cli body=""
+  local dir="$HOME/.claude" cli body="" pair
   mkdir -p "$dir/agents"
 
   cli="$(claude --version 2>/dev/null | awk '{print $1}' || true)"
   if [ -z "$cli" ]; then
-    echo "WARNING: claude CLI not found; install Claude Code $MIN_CLI or newer." >&2
+    echo "WARNING: claude CLI not found. Install it with: curl -fsSL https://claude.ai/install.sh | bash" >&2
   elif [ "$(printf '%s\n%s\n' "$MIN_CLI" "$cli" | sort -V | head -1)" != "$MIN_CLI" ]; then
-    echo "WARNING: Claude Code $cli is older than $MIN_CLI; run 'claude update'." >&2
+    echo "WARNING: Claude Code $cli is older than $MIN_CLI. Run: claude update (Homebrew: brew upgrade claude-code)" >&2
   fi
-  # The Explore agent's shell commands rely on these tools; the routing rules prefer rg.
-  for tool in sg fd bat rg; do
-    command -v "$tool" >/dev/null || echo "WARNING: '$tool' not found (brew install ast-grep fd bat ripgrep)." >&2
+  # The Explore agent's shell commands rely on sg, fd and bat; the routing rules prefer rg.
+  for pair in sg:ast-grep fd:fd bat:bat rg:ripgrep; do
+    command -v "${pair%%:*}" >/dev/null ||
+      echo "WARNING: '${pair%%:*}' not found. Install it with: brew install ${pair#*:}" >&2
   done
 
   # 1. Model keys in settings.json (all other keys are kept).
@@ -118,9 +138,10 @@ install_claude() {
     link "$HOME/.agents/skills" "$dir/skills"
   fi
 
-  # 5. Optional: Jev router (sends all Claude Code traffic through a local proxy).
+  # 5. Optional: Jev router. Its setup points Claude Code at a local proxy and sends prompts to Jev.
   if [ "$WITH_JEV" = 1 ]; then
-    command -v npx >/dev/null || { echo "Node.js 22+ is required for --with-jev" >&2; exit 1; }
+    echo "NOTE: jev-router sends your prompts to a third party (TypeSafe or OpenRouter)."
+    echo "      Claude Code cannot connect while the router is stopped. Undo with: jev-router uninstall"
     echo "Installing jev-router@$JEV_ROUTER_VERSION (interactive; asks for your Jev key)..."
     npx --yes "@ediri/jev-router@$JEV_ROUTER_VERSION" setup
     jev-router doctor || true
@@ -144,7 +165,9 @@ if [ "$DO_ANTIGRAVITY" = 1 ]; then install_antigravity; fi
 
 echo
 if [ -d "$BACKUP_DIR" ]; then echo "Backups: $BACKUP_DIR"; fi
-echo "Done. Restart your AI tools to load the new rules."
+echo "Done. Next steps (README: After install):"
+echo "  - Restart your AI tools so they load the new rules."
 if [ "$DO_CLAUDE" = 1 ]; then
-  echo "Claude desktop app: pick Sonnet in the model menu; the app's picker overrides settings.json."
+  echo "  - Claude desktop app: pick Sonnet in the model menu (the app's picker overrides settings.json)."
+  echo "  - In Claude Code, run /agents and check that Explore, search, grep and docs use Haiku."
 fi

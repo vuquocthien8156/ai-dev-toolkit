@@ -88,3 +88,15 @@ Project-specific skills live in that project's repo, not here.
 ## Progress log
 
 - 2026-10-18: plan approved; Phase 0 and Phase 1 started.
+- 2026-10-18: Phase 1 committed (`1b01c27` on `chore/slim-toolkit`, tag `pre-cleanup`). Tests passed:
+  empty fake HOME, fake HOME with a copy of the real config (run twice, no changes on run 2),
+  missing jq, and a fresh `git clone` + install in a clean Alpine container.
+- Pending owner approval: real-Mac run + one-time CLAUDE.md migration; remove rtk from the machine
+  (owner is not sure it helps); push the branch so a second machine can clone it.
+- Owner direction: be critical; keep only what is proven useful. Jev: recommend dropping the flag.
+- Real-Mac links that break when `~/.agents/rules` becomes a symlink: `~/.cursor/rules/*.mdc` (5)
+  and `~/.windsurfrules`.
+- 2026-10-18: full guide. `README.md` rewritten for the new installer (prerequisites with commands,
+  step-by-step walkthrough, backups/restore, Jev guide, uninstall, troubleshooting). `install.sh`
+  messages now print exact install commands; `--with-jev` checks Node 22+ and the Claude step up front.
+  Re-tested: fake HOME (empty, all tools, run twice), jev guards, Alpine container (no jq, run twice).
