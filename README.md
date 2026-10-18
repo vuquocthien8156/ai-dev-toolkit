@@ -89,8 +89,11 @@ Missing tools are not fatal, except `jq` for the Claude step:
 3. Clone and run:
 
    ```bash
-   git clone git@github.com:vuquocthien8156/ai-dev-toolkit.git ~/Documents/Coder/Personal/ai-dev-toolkit
+   git clone https://github.com/vuquocthien8156/ai-dev-toolkit.git ~/Documents/Coder/Personal/ai-dev-toolkit
    ```
+
+   (With an SSH key for this GitHub account you can use `git@github.com:vuquocthien8156/ai-dev-toolkit.git`.
+   The branch must be pushed first, or `git switch` fails.)
 
    ```bash
    cd ~/Documents/Coder/Personal/ai-dev-toolkit && git switch chore/slim-toolkit
