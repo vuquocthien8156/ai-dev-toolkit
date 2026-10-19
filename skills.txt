@@ -1,0 +1,6 @@
+# Upstream skills installed by ./install.sh --with-skills (one per line).
+# Format: <owner>/<repo>#<tag> <skill-name>
+# Pin a tag so every machine gets the same version. To upgrade, change the tag here and see
+# README "Skills".
+
+tt-a1i/archify#v3.1.0 archify

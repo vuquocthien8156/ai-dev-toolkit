@@ -1,346 +1,455 @@
-# AI Dev Toolkit
+# ai-dev-toolkit
 
-Personal toolkit for AI-assisted development. Combines curated skills, workflows, and rules for **Antigravity**, **Cursor**, **Claude Code**, **Windsurf**, and **GitHub Copilot**.
+My personal layer for AI coding tools: **working style (rules) + machine setup**.
+One set of rules is shared by Claude Code, Codex and Antigravity. Claude Code gets a few extra,
+Claude-only settings on top.
 
----
+Anything that can be installed from upstream (community skills, plugins) is **not** copied here.
 
-## Table of Contents
+> Status: branch `chore/slim-toolkit`. Old folders (`skills/`, `workflows/`, `templates/`,
+> `scripts/`, `user-rules/`, ...) are still in the repo and will be removed in Phase 2.
+> `install.sh` does not use them. Do **not** run the old `scripts/setup.sh` or `scripts/cleanup.sh`:
+> they wipe `~/.agents/skills` and `~/.claude/skills`. Plan: `docs/plans/toolkit-install-plan-v1.md`.
 
-- [First-Time Setup](#first-time-setup)
-- [What's Automatic vs Manual](#whats-automatic-vs-manual)
-- [Repository Structure](#repository-structure)
-- [How the 3-Tier System Works](#how-the-3-tier-system-works)
-- [Skills Reference](#skills-reference)
-- [Workflows Reference](#workflows-reference)
-- [Cross-IDE Support](#cross-ide-support)
-- [Skill Discovery](#skill-discovery)
+## Contents
+
+- [Quick start](#quick-start)
+- [Prerequisites](#prerequisites)
+- [Install on another machine](#install-on-another-machine)
+- [Options](#options)
+- [What install.sh does, step by step](#what-installsh-does-step-by-step)
+- [Reading the output](#reading-the-output)
+- [After install](#after-install)
 - [Updating](#updating)
-- [Adding to a New Project](#adding-to-a-new-project)
-- [Team Onboarding](#team-onboarding)
+- [Backups and restore](#backups-and-restore)
+- [Skills](#skills)
+- [Optional: Jev](#optional-jev)
+- [What is not installed](#what-is-not-installed)
+- [Uninstall](#uninstall)
+- [Security notes](#security-notes)
+- [Troubleshooting](#troubleshooting)
+- [Repo layout](#repo-layout)
 
----
-
-## First-Time Setup
-
-### Prerequisites
-
-- macOS with Zsh
-- Antigravity IDE (primary)
-- Git installed
-
-### Step 1: Clone and prepare
+## Quick start
 
 ```bash
-cd ~/Documents
-git clone <your-repo-url> ai-dev-toolkit
-chmod +x ai-dev-toolkit/scripts/setup.sh
+cd ~/Documents/Coder/Personal/ai-dev-toolkit
+./install.sh
 ```
 
-### Step 2: Run setup
+With no options it installs the core rules, plus every tool whose config folder exists
+(`~/.claude`, `~/.codex`, `~/.gemini`). It is safe to run again: a second run changes nothing.
 
-**A. Setup your Global Machine Environment (Run once)**
-```bash
-npx github:vuquocthien8156/ai-dev-toolkit --machine
-```
-This sets up `~/.gemini`, `~/.claude`, global templates, and global skills. (This is the default if no flag is provided).
+## Prerequisites
 
-**B. Setup a specific Project**
-```bash
-cd <your-project>
-npx github:vuquocthien8156/ai-dev-toolkit --project
-```
-This isolates the toolkit to your project by creating `.agents/` and generating IDE symlinks without polluting your global machine state.
+Supported: macOS and Linux (bash and symlinks). Windows is not supported.
 
-> **Selective execution**: Use `--rules`, `--skills`, or `--workflows` to run only specific steps.
-> See [Updating](#updating) for details.
+| Need | Why | Check | Install (macOS) |
+|---|---|---|---|
+| Homebrew | installs the tools below | `brew --version` | see below |
+| git | clone this repo | `git --version` | `xcode-select --install` or `brew install git` |
+| jq | Claude step edits `settings.json` | `jq --version` | `brew install jq` |
+| Claude Code 2.1.284+ | the `sonnet` alias maps to Sonnet 5.5 from this version | `claude --version` | see below |
+| ripgrep, fd, bat, ast-grep | used by the Haiku helper agents and the routing rules | `rg --version` | `brew install ripgrep fd bat ast-grep` |
+| Node.js | only for `--with-skills` (any recent version) and `--with-jev` (22+) | `node --version` | `brew install node` |
 
-### Step 3: Verify in Antigravity
-
-1. Open Antigravity → **Customizations** → **Rules** tab
-   - You should see Sections I–XIV (55 rules including Global Skill Trigger Map)
-2. Open Antigravity → **Customizations** → **Workflows** tab
-   - You should see: plan, review, debug, verify, docs, test, refactor, spike, pr
-
-### Step 4: (Optional) Targeting specific IDEs
-
-By default, `setup.sh` configures all supported IDEs. To target one:
+Install Homebrew (if `brew` is not found):
 
 ```bash
-setup.sh --ide antigravity
-setup.sh --ide claude
-setup.sh --ide cursor
-setup.sh --ide windsurf
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
 
----
-
-## What's Automatic vs Manual
-
-### ✅ Automatic (AI does this without prompting)
-
-| What                        | How it works                                                        | Source               |
-| --------------------------- | ------------------------------------------------------------------- | -------------------- |
-| **Proposal-only mode**      | AI proposes first, asks before editing                              | Section I in rules   |
-| **Verify before done**      | AI re-reads checklist, runs type check, reports status              | Section X in rules   |
-| **English output**          | All code, comments, docs in English                                 | Section XI in rules  |
-| **Lint changed files only** | AI only checks/fixes files it modified                              | Rule 39c in rules    |
-| **Skill auto-loading**      | AI loads relevant skills based on Global Skill Trigger Map          | Rule 51 in rules     |
-| **Token optimization**      | AI reads file outlines first, summarizes logs, detects context loss | Section XIV in rules |
-| **Context loss detection**  | AI stops and asks when context feels stale or uncertain             | Rule 54 in rules     |
-
-### 🔧 Manual (You trigger these)
-
-| What                 | How to trigger     | When to use                              |
-| -------------------- | ------------------ | ---------------------------------------- |
-| **Plan workflow**    | `/plan`            | Starting a new feature or complex task   |
-| **Checkpoint**       | `/checkpoint`      | Save task state before session switch    |
-| **Status**           | `/status`          | Report current progress vs plan          |
-| **Resume**           | `/resume`          | Restore context from past sessions       |
-| **Handoff**          | `/handoff`         | Prepare summary for next conversation    |
-| **Debug workflow**   | `/debug`           | Stuck on a bug                           |
-| **Verify workflow**  | `/verify`          | Before declaring task complete           |
-| **Docs workflow**    | `/docs`            | Record business/logic decisions          |
-| **Refresh workflow** | `/refresh-context` | Auto-detect stack, architecture & skills |
-| **Setup script**     | `setup.sh`         | New project or toolkit update            |
-
-### 🧠 Semi-Automatic (AI decides based on Skill Trigger Map)
-
-Rule 51 maps specific triggers to skills. The AI prints `📚 Loaded: <skill-name>` when loading:
-
-| Trigger                           | Skill Loaded                              |
-| --------------------------------- | ----------------------------------------- |
-| Bug report, error trace           | `systematic-debugging`                    |
-| Writing/reviewing TypeScript      | `typescript-mastery`                      |
-| Code review, PR review, `/review` | `code-review` + `security-best-practices` |
-| Git commit, branch, PR            | `git-workflow`                            |
-| DDD module detected               | `ddd-core-rules`                          |
-| Session > 15 messages             | `context-compression`                     |
-| Context feels stale               | `context-optimization`                    |
-| Writing tests, `/test`            | `backend-testing`                         |
-| Context lost after truncation     | `handoff.md` / `checkpoint.md`            |
-
-> **Tip**: If you don't see `📚 Loaded:` in chat, the AI may not be using skills. Ask: "bạn đã dùng skills nào?"
-
----
-
-## Repository Structure
-
-# Run to update/reinstall:
-
-npx github:vuquocthien8156/ai-dev-toolkit --force
-
-# OR for a clean system reset (if skills feel broken/bloated):
-
-npx github:vuquocthien8156/ai-dev-toolkit --clean
-
-```
-ai-dev-toolkit/
-│
-├├── skills/                            ← Self-written skills (→ ~/.agents/skills/)
-│   ├── ddd-core-rules/SKILL.md        ← DDD best practices
-│   └── ...                            ← TS mastery, code review, git, etc.
-│
-├── workflows/                         ← Project & Global commands (→ .agents/workflows/ or ~/.claude/commands/)
-│   ├── plan.md, checkpoint.md, status.md, resume.md, handoff.md
-│   └── debug.md, verify.md, docs.md, test.md, refactor.md, pr.md
-│
-├── user-rules/
-│   └── memory-rules.md                ← Tier 1 rules (→ GEMINI.md / CLAUDE.md)
-│
-├── scripts/
-│   ├── setup.sh                       ← Multi-IDE installer
-│   ├── cleanup.sh                     ← Safe system reset (Global skills/symlinks)
-│   └── skill-registry.json            ← Stack-to-skill mapping for /refresh-context
-│
-└── .gitignore                         ← Configured for clean repo
-```
-
----
-
-## How the 3-Tier System Works
-
-```
-┌─────────────────────────────────────────────────────────┐
-│  Tier 1: RULES (Always Active)                          │
-│  ~/.gemini/GEMINI.md                                     │
-│  Applied to EVERY conversation, EVERY project           │
-│  42 rules: strict mode, TS, workflow, verify, English   │
-├─────────────────────────────────────────────────────────┤
-│  Tier 2: SKILLS (Semi-Auto)                             │
-│  ~/.agents/skills/*.SKILL.md                             │
-│  AI reads when description matches current task         │
-│  DDD rules, TS mastery, code review, git workflow       │
-├─────────────────────────────────────────────────────────┤
-│  Tier 3: WORKFLOWS (Manual)                             │
-│  <project>/.agents/workflows/*.md                         │
-│  Triggered by /command in chat                          │
-│  /plan, /review, /debug, /verify                        │
-└─────────────────────────────────────────────────────────┘
-```
-
-**Key insight**: Put rules you want **always enforced** in Tier 1. Put **detailed reference material** in Tier 2 (skills). Put **step-by-step processes** in Tier 3 (workflows).
-
----
-
-## Skills Reference
-
-### ddd-core-rules
-
-- **When AI reads it**: Working on DDD-structured modules
-- **Content**: Aggregate rules, layer dependencies, tactical patterns, anti-patterns
-- **Sources**: Eric Evans, Martin Fowler, nestjslatam/ddd
-
-### typescript-mastery
-
-- **When AI reads it**: Writing or reviewing TypeScript code
-- **Content**: Type design, discriminated unions, branded types, type guards, generics, RO-RO, pitfalls
-- **Naming conventions table** included
-
-### code-review
-
-- **When AI reads it**: Reviewing code (own or others')
-- **Content**: 8-section checklist (type safety, architecture, performance, error handling, security, testing, docs)
-- **Severity levels**: 🔴 Critical, 🟡 Warning, 🟢 Suggestion
-
-### git-workflow
-
-- **When AI reads it**: Making commits, creating branches, preparing PRs
-- **Content**: Conventional Commits format, branch naming, PR template, release flow diagram
-
----
-
-## Workflows Reference
-
-| Command       | Purpose                 | When to use           |
-| ------------- | ----------------------- | --------------------- |
-| `/plan`       | Create plan + checklist | Starting a feature    |
-| `/checkpoint` | Save task state         | Before session switch |
-| `/status`     | Report progress         | Context feeling stale |
-| `/resume`     | Restore context         | New conversation      |
-| `/handoff`    | Session summary         | Ending a session      |
-| `/debug`      | Systematic debugging    | Stuck on a bug        |
-| `/verify`     | Evidence-based check    | Before finishing      |
-| `/docs`       | Maintain LLM Wiki       | Update entities, synthesize knowledge, or lint docs |
-
----
-
-## Cross-IDE Support
-
-| IDE                | Config file                               | How AI reads it                      | Template location         |
-| ------------------ | ----------------------------------------- | ------------------------------------ | ------------------------- |
-| **Antigravity**    | `GEMINI.md` + `.agents/skills/`           | Auto (rules always, skills by match) | Setup script handles this |
-| **Cursor**         | `.cursorrules` in project root            | Auto reads on project open           | `cross-ide/.cursorrules`  |
-| **Claude Code**    | `CLAUDE.md` in project root               | Auto reads on project open           | `cross-ide/CLAUDE.md`     |
-| **Windsurf**       | `.windsurfrules` + `.windsurf/workflows/` | Auto reads on project open           | Setup script handles this |
-| **GitHub Copilot** | `AGENTS.md` in project root               | Auto reads for agent mode            | `cross-ide/AGENTS.md`     |
-
-> **Important**: After copying cross-IDE templates, edit them to add project-specific details (architecture, database, key patterns). The templates contain generic TypeScript rules only.
-
----
-
-## Skill Discovery
-
-### Finding Skills
+Install Claude Code (pick one). It needs a Pro, Max, Team, Enterprise or Console account.
 
 ```bash
-npx skills find <query>       # Search by keyword
-npx skills add <owner/repo>   # Install from GitHub
+curl -fsSL https://claude.ai/install.sh | bash
 ```
 
-### Curated Catalogs
+```bash
+brew install --cask claude-code
+```
 
-| Catalog                  | URL                                                                        |
-| ------------------------ | -------------------------------------------------------------------------- |
-| **skills.sh**            | [skills.sh](https://skills.sh)                                             |
-| **Antigravity Awesome**  | [GitHub](https://github.com/sickn33/antigravity-awesome-skills)            |
-| **Awesome Agent Skills** | [GitHub](https://github.com/VoltAgent/awesome-agent-skills)                |
-| **Awesome Cursorrules**  | [GitHub](https://github.com/PatrickJS/awesome-cursorrules/tree/main/rules) |
+Then run `claude` once to log in. Check with `claude doctor`. Update with `claude update`
+(Homebrew install: `brew upgrade claude-code`; it does not auto-update).
 
-### Strategy: Keep Few, Keep Curated
+On Linux, use your package manager for git, jq, ripgrep, fd, bat and ast-grep
+(for example `sudo apt install git jq ripgrep fd-find bat`; on Debian/Ubuntu the binaries may be
+named `fdfind` and `batcat`).
 
-> Installing 100+ generic skills dilutes AI attention. Better: 5–10 curated skills with project-specific context.
+Missing tools are not fatal, except `jq` for the Claude step:
 
----
+- No `jq` + Claude step: the script stops **before** it changes anything.
+- No `claude`, `rg`, `fd`, `bat` or `sg`: the script prints a `WARNING` with the install command
+  and continues.
+
+## Install on another machine
+
+1. Install the [prerequisites](#prerequisites).
+2. Install and open each AI tool once, so its config folder exists (`~/.claude`, `~/.codex`,
+   `~/.gemini`). Or name the tools with flags (see [Options](#options)).
+3. Clone and run:
+
+   ```bash
+   git clone https://github.com/vuquocthien8156/ai-dev-toolkit.git ~/Documents/Coder/Personal/ai-dev-toolkit
+   ```
+
+   (With an SSH key for this GitHub account you can use `git@github.com:vuquocthien8156/ai-dev-toolkit.git`.
+   The branch must be pushed first, or `git switch` fails.)
+
+   ```bash
+   cd ~/Documents/Coder/Personal/ai-dev-toolkit && git switch chore/slim-toolkit
+   ```
+
+   ```bash
+   ./install.sh
+   ```
+
+   Or, to also install the skills in `skills.txt` (needs Node.js and network):
+
+   ```bash
+   ./install.sh --with-skills
+   ```
+
+4. Do the [After install](#after-install) steps.
+
+What a new machine does **not** get yet:
+
+- Personal skills (`code-review`, `typescript-mastery`, `verify`, `debug`, ...). `core/AGENTS.md`
+  names them, but they are not in `skills.txt` yet, so the agent cannot load them there.
+- Other upstream skills, unless they are in `skills.txt`.
+- Plugins, MCP servers, hooks. Install them by hand if you need them.
+
+Important: keep the clone where it is. The core rules are **symlinks** into this folder.
+If you move or delete the folder, the links break. If you move it, run `./install.sh` again.
+
+## Options
+
+```
+./install.sh [--claude] [--codex] [--antigravity] [--with-skills] [--with-jev] [-h|--help]
+```
+
+| Option | Effect |
+|---|---|
+| (none) | core + every tool whose config folder exists |
+| `--claude` | core + Claude Code only |
+| `--codex` | core + Codex only |
+| `--antigravity` | core + Antigravity only |
+| `--with-skills` | also install the skills in `skills.txt` for the selected tools (see [Skills](#skills)) |
+| `--with-jev` | with the Claude step: also install jev-router (see [Optional: Jev](#optional-jev)) |
+| `-h`, `--help` | show help |
+
+Flags can be combined, for example `./install.sh --claude --codex`.
+Core is always installed.
+
+## What install.sh does, step by step
+
+You do not need to read the script. This is everything it does, in order.
+
+**0. Checks (nothing is changed yet)**
+
+- Reads the options and picks the tools to install.
+- If the Claude step will run and `jq` is missing: stops with an error.
+- If `--with-skills` is given but no tool is selected, or `npx` (Node.js) is missing: stops with an error.
+- If `--with-jev` is given but the Claude step will not run, or Node.js 22+ is missing: stops with an error.
+
+**1. Core (always)**
+
+| Link | Points to |
+|---|---|
+| `~/.agents/AGENTS.md` | `<repo>/core/AGENTS.md` (general rules) |
+| `~/.agents/rules` | `<repo>/core/rules` (backend, frontend, mobile, workflow-protocol, examples-violations) |
+
+`~/.agents/AGENTS.md` is the hub. Every tool reads its rules through it.
+
+**2. Claude Code** (`--claude`, or `~/.claude` exists)
+
+1. Checks the `claude` version and the helper tools (`sg`, `fd`, `bat`, `rg`). Prints a warning
+   with the install command for anything missing. Does not stop.
+2. `~/.claude/settings.json`: sets 3 keys and keeps every other key as it is:
+   - `"model": "sonnet"`: main model.
+   - `"advisorModel": "opus"`: the advisor tool uses Opus.
+   - `"env": {"CLAUDE_CODE_SUBAGENT_MODEL": "sonnet"}`: sub-agents use Sonnet by default.
+3. `~/.claude/agents/`: copies 4 read-only helper agents that run on Haiku
+   (`claude-haiku-5-5`): `Explore`, `search`, `grep`, `docs`. Other agent files are not touched.
+   On macOS, `Explore.md` replaces an old `explore.md` (same name, different case).
+4. `~/.claude/CLAUDE.md`: writes a **managed block** between
+   `<!-- claude-setup:begin -->` and `<!-- claude-setup:end -->`
+   (source: `adapters/claude/claude-block.md`). The block:
+   - imports the core rules with `@~/.agents/AGENTS.md`;
+   - adds the model routing rules (use Haiku helpers for read-only work, call the advisor
+     before finalizing a plan and before reporting done, use `rg` not `grep -r`).
+
+   Your own lines outside the block are kept. An old block is replaced, never duplicated.
+   If `CLAUDE.md` still holds a full copy of the core rules, it prints a warning:
+   delete that copy by hand, because the block already imports it.
+
+   Why an import and not `AGENTS.md`: Claude Code (2.1.277+) reads `AGENTS.md` natively, but only
+   inside a project (the working folder and its parents), and by default only when that project has
+   no `CLAUDE.md`. It never reads files under `~/.agents/`. So the global rules need this import.
+   A project repo can still ship just an `AGENTS.md`, and Claude, Codex and Antigravity all read it.
+5. `~/.claude/skills`: if it does not exist and `~/.agents/skills` exists, links it there,
+   so Claude Code sees the same skills as the other tools. An existing `~/.claude/skills` is not touched.
+6. Only with `--with-jev`: runs the jev-router setup (see [Optional: Jev](#optional-jev)).
+
+`settings.json`, `CLAUDE.md` and the agents are real files, not links, because other tools
+and you also write to them.
+
+**3. Codex** (`--codex`, or `~/.codex` exists)
+
+- Link `~/.codex/AGENTS.md` -> `~/.agents/AGENTS.md`.
+
+**4. Antigravity** (`--antigravity`, or `~/.gemini` exists)
+
+- Link `~/.gemini/GEMINI.md` -> `~/.agents/AGENTS.md`.
+
+**5. Skills** (only with `--with-skills`)
+
+- For each line in `skills.txt`, runs the pinned `skills` CLI:
+  `npx skills@1.5.18 add <owner>/<repo>#<tag> -g -s <name> -a <tools> -y`.
+- The CLI keeps one copy in `~/.agents/skills/<name>`. It counts Codex and Antigravity as reading
+  that folder directly (not yet checked in those tools). Claude Code sees it through the
+  `~/.claude/skills` link from step 2.5 (the script creates `~/.agents/skills` first, so the link is
+  made on a new machine too). Only if `~/.claude/skills` is already a real folder does the CLI add a
+  per-skill link inside it.
+- The script stops with an error if a skill is not in `~/.agents/skills/` after the CLI ran
+  (wrong tag or name), or if a line in `skills.txt` has no skill name.
+- A skill that is already in `~/.agents/skills/` is skipped (`ok:`), so a re-run needs no network.
+- Telemetry of the `skills` CLI is turned off (`DO_NOT_TRACK=1`).
+
+**6. Summary**
+
+- Prints the backup folder (only if something was backed up) and the next steps.
+
+**Safety rules the script follows**
+
+- It never deletes anything. A file or folder in the way of a link is **moved** to the backup folder.
+- A file is backed up and rewritten only when its content really changes.
+- It never copies tool configs with secrets (`config.toml`, `auth.json`, `oauth_creds.json`) into
+  the repo, and never links `settings.json`.
+
+## Reading the output
+
+| Prefix | Meaning |
+|---|---|
+| `== core` | a new section starts |
+| `ok:` | already correct, nothing changed |
+| `linked:` | a symlink was created |
+| `updated:` | a file was written |
+| `added:` | a skill from `skills.txt` was installed |
+| `  backup:` | the old version was saved here first |
+| `WARNING:` | something is missing; the install continues |
+
+## After install
+
+1. Restart your AI tools (quit and open again) so they load the new rules.
+2. Claude Code CLI: run `/model` and check it shows Sonnet. Or set it once: `/model claude-sonnet-5-5`.
+3. Claude desktop app: pick **Sonnet** in the model menu. The app's picker overrides `settings.json`.
+4. In Claude Code, run `/agents` and check that `Explore`, `search`, `grep` and `docs` use Haiku.
+5. In Claude Code, run `/memory` and check that `~/.agents/AGENTS.md` is loaded through the import.
 
 ## Updating
 
-When you update this toolkit repo:
-
 ```bash
-# 1. Update the toolkit
-cd ~/Documents/ai-dev-toolkit
-git pull   # or edit files directly
-
-# 2. Re-run setup in each project (runs all steps)
-cd ~/Documents/Zigvy/hr-forte/hr-leave-module
-npx github:vuquocthien8156/ai-dev-toolkit
+cd ~/Documents/Coder/Personal/ai-dev-toolkit && git pull
 ```
 
-### Selective Updates
+- Core rules (`core/`) are links: the change is live right away. Just restart the tools.
+- Claude files (`adapters/claude/`) are copies: run `./install.sh` again after a pull.
 
-Instead of running everything, use flags to run only what you need:
+To change a rule, edit `core/AGENTS.md` or `core/rules/*` in this repo and commit.
+Do not edit `~/.agents/AGENTS.md` and expect it to stay private: it **is** the repo file.
 
-```bash
-# Only update workflows (most common after editing .md files)
-setup.sh --workflows --force
+## Backups and restore
 
-# Only refresh global rules
-setup.sh --rules
+Each run that changes something makes one folder: `~/.agents/backups/<date>-<time>-<pid>/`.
+Inside, files keep their path under your home folder. Example:
 
-# Only reinstall skills
-setup.sh --skills
-
-# Combine flags
-setup.sh --rules --workflows --force
+```
+~/.agents/backups/20261018-101500-1234/.claude/CLAUDE.md      # was ~/.claude/CLAUDE.md
+~/.agents/backups/20261018-101500-1234/.codex/AGENTS.md       # was ~/.codex/AGENTS.md
 ```
 
-### Flag Reference
-
-| Flag | Short | What it does |
-| ------------- | ----- | ------------------------------------ |
-| _(no flags)_ | | Defaults to `--machine` |
-| `--machine` | `-m` | Setup global environment ($HOME/...) |
-| `--project` | `-p` | Setup local project environment |
-| `--rules` | `-r` | Only Step 1: update global rules |
-| `--skills` | `-s` | Only Steps 2+2.5: install all skills |
-| `--workflows` | `-w` | Only Step 3: copy workflows |
-| `--force` | `-f` | Overwrite existing files (any step) |
-| `--clean` | `-c` | Clean global skills and IDE symlinks |
-
-### Overwrite Behavior
-
-| Component | Default behavior   | With `--force`     |
-| --------- | ------------------ | ------------------ |
-| Rules     | Always overwritten | Always overwritten |
-| Skills    | Always updated     | Always updated     |
-| Workflows | **Skip existing**  | **Overwrite all**  |
-
-> Use `--force` when you want to reset project workflows to the latest toolkit versions.
-
----
-
-## Adding to a New Project
-
-1. Run the toolkit setup script:
+Restore a real file (for example `CLAUDE.md`):
 
 ```bash
-cd <your-project>
-npx github:vuquocthien8156/ai-dev-toolkit
+cp ~/.agents/backups/<stamp>/.claude/CLAUDE.md ~/.claude/CLAUDE.md
 ```
 
-2. Open your IDE and ask your AI to run the `/refresh-context` workflow.
-3. The AI will scan your project, propose community skills, download them physically into `.agents/skills/`, and create relative symlinks for all your IDEs (`.claude`, `.cursor`, `.windsurf`, etc.).
+Restore something that the script replaced with a link (for example Codex):
 
-That's it. The repository is now **100% Self-Contained**. All workflows, skills, and Pointers are tracked in Git.
+```bash
+rm ~/.codex/AGENTS.md && mv ~/.agents/backups/<stamp>/.codex/AGENTS.md ~/.codex/AGENTS.md
+```
 
----
+`rm` on a symlink removes only the link, not the file it points to.
+Backups are never cleaned up automatically. Delete old ones by hand when you are sure.
 
-## Team Onboarding
+## Skills
 
-Because this toolkit uses a **Zero-Config Self-Contained Architecture**, onboarding a new team member to a project is incredibly simple:
+`skills.txt` lists upstream skills, pinned to a git tag so every machine gets the same version:
 
-1. **Clone the project**
-2. **Done!**
-   - The AI IDE will automatically follow the relative symlinks (e.g., `.claude/skills -> ../.agents/skills`) and load the project-specific skills and workflows instantly without requiring the developer to run any installation scripts.
+```
+tt-a1i/archify#v3.1.0 archify
+```
 
-_(Optional)_ If the team member wants to install the **Global Tier 1 Rules** (like strict English output, no-assumption behavior) across their entire machine, they can clone this toolkit and run `setup.sh --rules` on their machine once.
+Install them (with the tools you use):
+
+```bash
+./install.sh --with-skills
+```
+
+Read this first:
+
+- Skills are third-party code and run with full agent permissions. Read a skill before you add it.
+- Some skills call the network themselves (for example archify checks for its own updates).
+
+Add a skill: find its repo and latest tag, add one line `<owner>/<repo>#<tag> <skill-name>`,
+then run `./install.sh --with-skills`. List the skills in a repo with:
+
+```bash
+npx skills add <owner>/<repo> --list
+```
+
+Upgrade a skill: change its tag in `skills.txt`, remove the old copy, then install again:
+
+```bash
+npx skills remove <skill-name> -g -y
+```
+
+```bash
+./install.sh --with-skills
+```
+
+Skills you wrote yourself are not in `skills.txt` yet (planned, see `docs/plans/`).
+
+## Optional: Jev
+
+[jev-router](https://github.com/dirien/jev-router) is a third-party router: Claude Code sends
+requests to a local proxy, and the proxy picks a model through Jev. It is **off by default**.
+
+Read this first:
+
+- **Privacy:** your prompts and code go to a third party (TypeSafe or OpenRouter), not only to Anthropic.
+  Check your company rules before you use it at work.
+- It runs as a background service (launchd on macOS, systemd on Linux).
+  **If the service stops, Claude Code cannot connect.**
+- Its setup changes `~/.claude/settings.json` `env`: `ANTHROPIC_BASE_URL=http://127.0.0.1:4000`,
+  `CLAUDE_CODE_GATEWAY_HINT_HEADERS=1`, `CLAUDE_CODE_AUTO_COMPACT_WINDOW=160000`, `ENABLE_TOOL_SEARCH=true`.
+
+Requirements:
+
+- Node.js 22+ (`brew install node`).
+- Claude Code 2.1.273+.
+- A Jev key from [TypeSafe](https://console.typesafe.ai) or [OpenRouter](https://openrouter.ai).
+  Create an account there and copy the key. The setup asks for it.
+- No `sudo` needed.
+
+Install through this toolkit (pinned version):
+
+```bash
+./install.sh --claude --with-jev
+```
+
+Or by hand (the package name is `@ediri/jev-router`; `npx jev-router` is a **different**, unrelated package):
+
+```bash
+npx @ediri/jev-router setup
+```
+
+Setup saves the key to `~/.config/jev-router/env` and starts the service.
+
+Check it:
+
+```bash
+jev-router doctor
+```
+
+```bash
+curl -s http://127.0.0.1:4000/healthz
+```
+
+`jev-router doctor --live` makes one real (paid) request. Live view: http://127.0.0.1:4100
+
+Upgrade:
+
+```bash
+npx @ediri/jev-router@latest setup
+```
+
+Remove it:
+
+```bash
+jev-router uninstall
+```
+
+```bash
+npm uninstall -g @ediri/jev-router
+```
+
+Config stays in `~/.config/jev-router` and `~/.local/state/jev-router`; delete them by hand if you want.
+Then check that `ANTHROPIC_BASE_URL` is gone from `~/.claude/settings.json`.
+
+## What is not installed
+
+- The AI apps themselves (Claude Code, Codex, Antigravity). Install them first.
+- Skills, unless you pass `--with-skills`, and then only the ones in `skills.txt`.
+  Rule 12 in `core/AGENTS.md` names personal skills (`code-review`, `typescript-mastery`, ...)
+  that are not in `skills.txt` yet; moving them into this repo is planned.
+- Plugins, MCP servers, hooks, status line.
+- Cursor and Windsurf. Old links from `~/.cursor/rules/*.mdc` and `~/.windsurfrules` into
+  `~/.agents/rules/core/...` break once `~/.agents/rules` points to this repo (flat layout).
+
+## Uninstall
+
+1. Remove the links (only links, the repo files stay):
+
+   ```bash
+   rm ~/.agents/AGENTS.md ~/.agents/rules ~/.codex/AGENTS.md ~/.gemini/GEMINI.md
+   ```
+
+2. Claude: delete the lines from `<!-- claude-setup:begin -->` to `<!-- claude-setup:end -->` in
+   `~/.claude/CLAUDE.md`, and delete `~/.claude/agents/{Explore,search,grep,docs}.md`.
+3. Claude `settings.json`: remove the 3 keys by hand, or restore it from a backup.
+4. Skills: `npx skills remove <skill-name> -g -y` for each line in `skills.txt`.
+5. Put back old files from `~/.agents/backups/<stamp>/` if you want (see [Backups and restore](#backups-and-restore)).
+
+## Security notes
+
+- Never copy or link `~/.codex/config.toml`, `auth.json`, `oauth_creds.json` or
+  `~/.claude/settings.json` into this repo. They can hold tokens or passwords.
+- Because Codex and Antigravity files are links into the repo, any text a tool appends to
+  `~/.codex/AGENTS.md` or `~/.gemini/GEMINI.md` lands in `core/AGENTS.md`.
+  Check `git status` and `git diff` before every commit.
+
+## Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| `jq is required for the Claude step` | `brew install jq`, or run `./install.sh --codex --antigravity` |
+| `WARNING: claude CLI not found` | install Claude Code (see [Prerequisites](#prerequisites)) |
+| `Claude Code X is older than 2.1.284` | `claude update` (Homebrew: `brew upgrade claude-code`) |
+| `--with-skills needs Node.js (npx)` | `brew install node` |
+| `--with-skills needs at least one tool` | add `--claude`, `--codex` or `--antigravity` |
+| A skill did not update after you changed its tag | it is skipped while installed; see [Skills](#skills) |
+| `--with-jev needs Node.js 22 or newer` | `brew install node` |
+| `--with-jev needs the Claude step` | add `--claude`, or install Claude Code first |
+| A tool was skipped | its config folder does not exist; open the tool once, or pass its flag |
+| Rules not loaded | restart the tool; check the link: `ls -l ~/.agents/AGENTS.md` |
+| Broken links after moving the repo | run `./install.sh` again from the new place |
+| `git status` shows changes in `core/AGENTS.md` you did not make | a tool wrote into a linked file; review with `git diff`, then keep or `git restore` |
+| Claude Code cannot connect after Jev | `jev-router doctor`; or `jev-router uninstall` |
+
+## Repo layout
+
+```
+ai-dev-toolkit/
+├── install.sh                 the installer
+├── skills.txt                 pinned upstream skills (--with-skills)
+├── core/
+│   ├── AGENTS.md              general rules (all tools)
+│   └── rules/                 backend, frontend, mobile, workflow-protocol, examples-violations
+├── adapters/claude/
+│   ├── agents/                Explore.md, search.md, grep.md, docs.md (Haiku)
+│   └── claude-block.md        managed CLAUDE.md block (core import + model routing)
+└── docs/plans/                plans and progress log
+```
